@@ -1,0 +1,8 @@
+
+{
+  "name": "Maya Express Logistics ERP",
+  "description": "A high-performance Logistics ERP suite for fleet tracking, documentation, billing, and executive operations oversight.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
