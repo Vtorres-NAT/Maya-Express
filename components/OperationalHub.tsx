@@ -1,82 +1,8 @@
 import React from 'react';
-
-// Using local interface for this module to ensure it handles the specific detailed fields
-// In a real app we'd import shared types, but here we want to ensure the specific layout matches the data.
-interface FleetUnit {
-  id: string; // Unit ID / Permon
-  status: 'In Transit' | 'At Dock' | 'Maintenance' | 'Idle' | 'Loading';
-  type: 'Refrigerado' | 'Congelado' | 'Seco';
-  brand: string;
-  plates: string;
-  color: string;
-  driver: {
-    name: string;
-    phone: string;
-    license?: string;
-    rfc?: string;
-  };
-  loc: string;
-  colorCode: 'emerald' | 'blue' | 'amber' | 'slate' | 'primary';
-}
+import { FleetUnit } from '../types';
+import { FLEET_DATA } from '../data/mockData';
 
 const OperationalHub: React.FC = () => {
-  const FLEET_DATA: FleetUnit[] = [
-    {
-      id: 'PERMON 117 / 193',
-      status: 'In Transit',
-      type: 'Refrigerado',
-      brand: 'VOLVO / UTILITY',
-      plates: '13BE3G / 59UV6L',
-      color: 'BLANCO',
-      driver: { name: 'ERICK ALAN SANTYIESTEBAN OROZCO', phone: '427 107 2268', license: '00041834', rfc: 'SAOE970311JZ5' },
-      loc: 'Mérida Highway',
-      colorCode: 'emerald'
-    },
-    {
-      id: 'FLETES EM-3',
-      status: 'Loading',
-      type: 'Congelado',
-      brand: 'VOLVO / GRAND DANES',
-      plates: '73BF7G / 61UL9T (ECO 2)',
-      color: 'BLANCO',
-      driver: { name: 'JUAN CARLOS VERGARA VAZQUEZ', phone: '55 1824 9532' },
-      loc: 'CDMX Hub',
-      colorCode: 'primary'
-    },
-    {
-      id: 'FLETES EM 3 / ECO 1',
-      status: 'In Transit',
-      type: 'Refrigerado',
-      brand: 'BLANCO / HUNDAY',
-      plates: '03AJ6J / 70UG2G',
-      color: 'GRIS',
-      driver: { name: 'JOSE ADRIAN GONZAGA RANGEL', phone: '5536982583', license: 'DF001109655' },
-      loc: 'Bajío Route',
-      colorCode: 'blue'
-    },
-    {
-      id: 'PERMON 132 / 184',
-      status: 'Maintenance',
-      type: 'Congelado',
-      brand: 'KENWORTH / WABASH',
-      plates: '65BF5G / 78US6V',
-      color: 'BLANCO',
-      driver: { name: 'FELIPE RUVALCABA TELLEZ', phone: 'N/A' },
-      loc: 'Service Yard',
-      colorCode: 'amber'
-    },
-    {
-      id: 'ENCARNACION',
-      status: 'Idle',
-      type: 'Seco',
-      brand: 'PROSTAR / WABHAS',
-      plates: '41AZ9E / 91TX1F',
-      color: 'BLANCO Y ROJO',
-      driver: { name: 'GONZALO ENCARNACION VAQUEZ', phone: 'N/A' },
-      loc: 'Puebla Yard',
-      colorCode: 'slate'
-    }
-  ];
 
   return (
     <div className="space-y-8">
@@ -95,20 +21,20 @@ const OperationalHub: React.FC = () => {
           <div key={i} className={`bg-white rounded-2xl border border-slate-200 shadow-sm p-0 overflow-hidden relative group hover:shadow-lg transition-all`}>
             {/* Status Header */}
             <div className={`p-4 border-b border-slate-100 flex justify-between items-center ${truck.colorCode === 'emerald' ? 'bg-emerald-50' :
-                truck.colorCode === 'blue' ? 'bg-blue-50' :
-                  truck.colorCode === 'amber' ? 'bg-amber-50' :
-                    truck.colorCode === 'primary' ? 'bg-indigo-50' : 'bg-slate-50'
+              truck.colorCode === 'blue' ? 'bg-blue-50' :
+                truck.colorCode === 'amber' ? 'bg-amber-50' :
+                  truck.colorCode === 'primary' ? 'bg-indigo-50' : 'bg-slate-50'
               }`}>
               <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">{truck.type}</span>
               <span className={`px-2 py-1 rounded-md text-[9px] font-black uppercase flex items-center gap-1.5 ${truck.colorCode === 'emerald' ? 'bg-emerald-100 text-emerald-700' :
-                  truck.colorCode === 'blue' ? 'bg-blue-100 text-blue-700' :
-                    truck.colorCode === 'amber' ? 'bg-amber-100 text-amber-700' :
-                      truck.colorCode === 'primary' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-200 text-slate-600'
+                truck.colorCode === 'blue' ? 'bg-blue-100 text-blue-700' :
+                  truck.colorCode === 'amber' ? 'bg-amber-100 text-amber-700' :
+                    truck.colorCode === 'primary' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-200 text-slate-600'
                 }`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${truck.colorCode === 'emerald' ? 'bg-emerald-500' :
-                    truck.colorCode === 'blue' ? 'bg-blue-500' :
-                      truck.colorCode === 'amber' ? 'bg-amber-500' :
-                        truck.colorCode === 'primary' ? 'bg-indigo-500' : 'bg-slate-500'
+                  truck.colorCode === 'blue' ? 'bg-blue-500' :
+                    truck.colorCode === 'amber' ? 'bg-amber-500' :
+                      truck.colorCode === 'primary' ? 'bg-indigo-500' : 'bg-slate-500'
                   }`}></span>
                 {truck.status}
               </span>

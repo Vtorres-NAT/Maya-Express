@@ -1,4 +1,4 @@
-import { ServiceOrder } from '../types';
+import { ServiceOrder, FleetUnit } from '../types';
 
 export const MOCK_ORDERS: ServiceOrder[] = [
     {
@@ -100,5 +100,63 @@ export const MOCK_ORDERS: ServiceOrder[] = [
         documentation: { receptionDate: '25 abr 2024', insurance: 'Plus', clientInvoice: 'F-334', invoiceValue: 550000, shippingMethod: 'Terrestre', paymentMethod: 'Transferencia', requiresInvoice: true },
         logistics: { palletWeight: 18, palletCount: 10 },
         workflow: { includesPickup: true, includesShipping: true, includesDelivery: true }
+    }
+];
+
+export const FLEET_DATA: FleetUnit[] = [
+    {
+        id: 'PERMON 117 / 193',
+        status: 'In Transit',
+        type: 'Refrigerado',
+        brand: 'VOLCO / UTILITY',
+        plates: '13BE3G / 59UV6L',
+        color: 'BLANCO',
+        driver: { name: 'ERICK ALAN SANTYIESTEBAN OROZCO', phone: '427 107 2268', license: '00041834', rfc: 'SAOE970311JZ5' },
+        loc: 'Mérida Highway',
+        colorCode: 'emerald'
+    },
+    {
+        id: 'FLETES EM-3',
+        status: 'Loading',
+        type: 'Congelado',
+        brand: 'VOLCO / GRAND DANES',
+        plates: '73BF7G / 61UL9T (ECO 2)',
+        color: 'BLANCO',
+        driver: { name: 'JUAN CARLOS VERGARA VAZQUEZ', phone: '55 1824 9532' },
+        loc: 'CDMX Hub',
+        colorCode: 'primary'
+    },
+    {
+        id: 'FLETES EM 3 / ECO 1',
+        status: 'In Transit',
+        type: 'Refrigerado',
+        brand: 'BLANCO / HUNDAY',
+        plates: '03AJ6J / 70UG2G',
+        color: 'GRIS',
+        driver: { name: 'JOSE ADRIAN GONZAGA RANGEL', phone: '5536982583', license: 'DF001109655' },
+        loc: 'Bajío Route',
+        colorCode: 'blue'
+    },
+    {
+        id: 'PERMON 132 / 184',
+        status: 'Maintenance',
+        type: 'Congelado',
+        brand: 'KENWORTH / WABASH',
+        plates: '65BF5G / 78US6V',
+        color: 'BLANCO',
+        driver: { name: 'FELIPE RUVALCABA TELLEZ', phone: 'N/A' },
+        loc: 'Service Yard',
+        colorCode: 'amber'
+    },
+    {
+        id: 'ENCARNACION',
+        status: 'Idle',
+        type: 'Seco',
+        brand: 'PROSTAR / WABHAS',
+        plates: '41AZ9E / 91TX1F',
+        color: 'BLANCO Y ROJO',
+        driver: { name: 'GONZALO ENCARNACION VAQUEZ', phone: 'N/A' },
+        loc: 'Puebla Yard',
+        colorCode: 'slate'
     }
 ];

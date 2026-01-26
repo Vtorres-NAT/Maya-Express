@@ -120,3 +120,20 @@ export interface ServiceOrder {
     includesDelivery: boolean; // ¿Incluye ENTREGA FINAL?
   };
 }
+
+export interface FleetUnit {
+  id: string; // Unit ID / Permon
+  status: 'In Transit' | 'At Dock' | 'Maintenance' | 'Idle' | 'Loading';
+  type: 'Refrigerado' | 'Congelado' | 'Seco';
+  brand: string;
+  plates: string;
+  color: string;
+  driver: {
+    name: string;
+    phone: string;
+    license?: string;
+    rfc?: string;
+  };
+  loc: string;
+  colorCode: 'emerald' | 'blue' | 'amber' | 'slate' | 'primary';
+}

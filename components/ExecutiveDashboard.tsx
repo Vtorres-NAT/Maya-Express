@@ -1,21 +1,23 @@
 
 import React, { useEffect, useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { generateLogisticsInsights } from '../lib/gemini';
-
-const data = [
-  { name: 'Lun', revenue: 4000, trips: 24 },
-  { name: 'Mar', revenue: 3000, trips: 18 },
-  { name: 'Mie', revenue: 2000, trips: 22 },
-  { name: 'Jue', revenue: 2780, trips: 30 },
-  { name: 'Vie', revenue: 1890, trips: 28 },
-  { name: 'Sab', revenue: 2390, trips: 15 },
-  { name: 'Dom', revenue: 3490, trips: 12 },
-];
+import { MOCK_ORDERS, FLEET_DATA } from '../data/mockData';
 
 const ExecutiveDashboard: React.FC = () => {
-  const [aiInsights, setAiInsights] = useState<{title: string, desc: string}[]>([]);
+  const [aiInsights, setAiInsights] = useState<{ title: string, desc: string }[]>([]);
   const [loadingAi, setLoadingAi] = useState(true);
+
+  // Dynamic Metrics
+  const activeShipments = MOCK_ORDERS.filter(o => o.status === 'transito' || o.status === 'confirmada').length;
+  const unitsInOperation = FLEET_DATA.filter(u => u.status === 'In Transit' || u.status === 'Loading').length;
+  const ordersInWarehouse = MOCK_ORDERS.filter(o => o.status === 'bodega').length;
+
+  const chartData = [
+    { name: 'Confirmada', value: MOCK_ORDERS.filter(o => o.status === 'confirmada').length, color: '#10b981' },
+    { name: 'En Tránsito', value: MOCK_ORDERS.filter(o => o.status === 'transito').length, color: '#3b82f6' },
+    { name: 'En Bodega', value: MOCK_ORDERS.filter(o => o.status === 'bodega').length, color: '#f59e0b' },
+  ];
 
   useEffect(() => {
     const fetchInsights = async () => {
@@ -31,17 +33,17 @@ const ExecutiveDashboard: React.FC = () => {
     <div className="space-y-8 animate-in fade-in duration-700">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { label: 'Envíos Diarios', value: '142', trend: '+8.4%', icon: 'local_shipping', color: 'blue' },
-          { label: 'Rutas Activas', value: '28', trend: 'En Ruta', icon: 'route', color: 'emerald' },
-          { label: 'Facturación Pendiente', value: '$2.4M', trend: '12 Facturas', icon: 'payments', color: 'amber' },
-          { label: 'Estado de Flota', value: '92.5%', trend: '4 en Taller', icon: 'precision_manufacturing', color: 'slate' }
+          { label: 'Envíos Activos', value: activeShipments, trend: 'Confirmados/Ruta', icon: 'local_shipping', color: 'blue' },
+          { label: 'Unidades en Operación', value: unitsInOperation, trend: 'Tránsito/Carga', icon: 'route', color: 'emerald' },
+          { label: 'Órdenes en Bodega', value: ordersInWarehouse, trend: 'Stock Hub', icon: 'warehouse', color: 'amber' },
+          { label: 'Eficiencia Operativa', value: '94.2%', trend: 'Objetivo: 95%', icon: 'precision_manufacturing', color: 'slate' }
         ].map((kpi, i) => (
           <div key={i} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-primary transition-all group">
             <div className="flex justify-between items-start mb-4">
               <div className="p-2 bg-slate-50 text-slate-600 rounded-lg group-hover:bg-primary group-hover:text-white transition-colors">
                 <span className="material-symbols-outlined">{kpi.icon}</span>
               </div>
-              <span className={`text-xs font-black uppercase tracking-wider ${kpi.color === 'blue' ? 'text-blue-600' : kpi.color === 'emerald' ? 'text-emerald-600' : 'text-amber-600'}`}>
+              <span className={`text-[10px] font-black uppercase tracking-wider ${kpi.color === 'blue' ? 'text-blue-600' : kpi.color === 'emerald' ? 'text-emerald-600' : 'text-amber-600'}`}>
                 {kpi.trend}
               </span>
             </div>
@@ -54,7 +56,7 @@ const ExecutiveDashboard: React.FC = () => {
       {/* AI Insights Section */}
       <div className="bg-gradient-to-br from-brand-navy to-brand-dark rounded-3xl p-8 text-white border-b-4 border-primary shadow-2xl overflow-hidden relative">
         <div className="absolute top-0 right-0 p-8 opacity-10">
-           <span className="material-symbols-outlined text-[120px]">psychology</span>
+          <span className="material-symbols-outlined text-[120px]">psychology</span>
         </div>
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-6">
@@ -63,7 +65,7 @@ const ExecutiveDashboard: React.FC = () => {
             </span>
             <h3 className="text-sm font-black uppercase tracking-[0.2em]">Maya AI: Perspectivas Estratégicas</h3>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {loadingAi ? (
               [1, 2, 3].map(i => <div key={i} className="h-24 bg-white/5 rounded-2xl animate-pulse"></div>)
@@ -83,25 +85,25 @@ const ExecutiveDashboard: React.FC = () => {
         <div className="col-span-12 xl:col-span-8 bg-white rounded-3xl border border-slate-200 shadow-sm p-8">
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h4 className="font-black text-brand-navy uppercase text-sm tracking-widest">Rendimiento de Ingresos</h4>
-              <p className="text-xs text-slate-500 font-medium">Análisis de consolidación mensual</p>
+              <h4 className="font-black text-brand-navy uppercase text-sm tracking-widest">Distribución de Órdenes</h4>
+              <p className="text-xs text-slate-500 font-medium">Estado actual del flujo operativo</p>
             </div>
-            <select className="text-xs font-bold border-slate-200 rounded-lg px-3 py-1.5 focus:ring-primary">
-              <option>Últimos 7 Días</option>
-              <option>Últimos 30 Días</option>
-            </select>
           </div>
           <div className="h-[350px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data}>
+              <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} dy={10} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fontBold: '900', fill: '#1e293b' }} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                <Tooltip 
+                <Tooltip
                   cursor={{ fill: '#f8fafc' }}
                   contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
                 />
-                <Bar dataKey="revenue" fill="#2b6cee" radius={[4, 4, 0, 0]} barSize={40} />
+                <Bar dataKey="value" radius={[8, 8, 0, 0]} barSize={60}>
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -109,21 +111,22 @@ const ExecutiveDashboard: React.FC = () => {
 
         <div className="col-span-12 xl:col-span-4 flex flex-col gap-6">
           <h4 className="font-black text-brand-navy flex items-center gap-3 uppercase text-sm tracking-widest">
-            <span className="material-symbols-outlined text-primary">analytics</span> Eventos en Vivo
+            <span className="material-symbols-outlined text-primary">analytics</span> Eventos Recientes
           </h4>
-          <div className="space-y-4 max-h-[480px] overflow-y-auto pr-2 custom-scrollbar">
-            {[
-              { type: 'Crítico', time: '14:22 PM', title: 'Falla de Temperatura', unit: 'MX-4552', desc: 'Temp a -8°C (Umbral: -18°C).' },
-              { type: 'Update', time: '14:05 PM', title: 'Arribo a HUB', unit: 'MX-2024', desc: 'Viaje VIA-882 llegó a Cancún.' },
-              { type: 'Factura', time: '13:48 PM', title: 'Nueva Factura', unit: 'F-5518', desc: 'Factura por $42.5k procesada.' }
-            ].map((event, i) => (
-              <div key={i} className={`bg-white border-l-4 ${event.type === 'Crítico' ? 'border-red-500' : 'border-primary'} p-4 rounded-xl shadow-sm border border-slate-200`}>
-                <div className="flex justify-between items-start mb-2">
-                  <span className={`text-[10px] font-black uppercase tracking-widest ${event.type === 'Crítico' ? 'text-red-500' : 'text-primary'}`}>{event.type}</span>
-                  <span className="text-[9px] font-mono text-slate-400">{event.time}</span>
+          <div className="relative pl-4 border-l-2 border-slate-100 space-y-8 max-h-[480px] overflow-y-auto pr-2 custom-scrollbar">
+            {MOCK_ORDERS.slice(0, 4).map((order, i) => (
+              <div key={i} className="relative">
+                <div className={`absolute -left-[25px] top-0 w-4 h-4 rounded-full border-2 border-white shadow-sm flex items-center justify-center ${order.status === 'transito' ? 'bg-blue-500' :
+                  order.status === 'bodega' ? 'bg-amber-500' : 'bg-emerald-500'
+                  }`}></div>
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-primary transition-colors">
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-[9px] font-black uppercase text-slate-400 tracking-tighter">Guía: {order.general.guideNumber}</span>
+                    <span className="text-[9px] font-mono text-slate-300">Hoy</span>
+                  </div>
+                  <p className="text-xs font-bold text-brand-navy">Envío a {order.general.destination}</p>
+                  <p className="text-[10px] text-slate-500 mt-1">Estatus: <span className="capitalize font-black text-primary">{order.status}</span></p>
                 </div>
-                <p className="text-xs font-bold text-brand-navy">{event.title} - <span className="text-primary font-mono">{event.unit}</span></p>
-                <p className="text-[11px] text-slate-500 mt-1">{event.desc}</p>
               </div>
             ))}
           </div>
