@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ServiceOrder } from '../types';
-import { MOCK_ORDERS } from '../data/mockData';
+import { MOCK_ORDERS, FLEET_DATA } from '../data/mockData';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -94,21 +94,42 @@ const StatusBadge: React.FC<{ status: ServiceOrder['status'] }> = ({ status }) =
 // --- CREATE/EDIT FORM ---
 const CreateServiceOrder: React.FC<{
   initialOrder?: ServiceOrder;
+  existingOrders: ServiceOrder[];
   onSave: (order: ServiceOrder) => void;
   onCancel: () => void;
-}> = ({ initialOrder, onSave, onCancel }) => {
+}> = ({ initialOrder, existingOrders, onSave, onCancel }) => {
+  const generateNextGuideNumber = () => {
+    const cmeOrders = existingOrders
+      .map(o => o.general.guideNumber)
+      .filter(g => g && g.startsWith('CME-'))
+      .map(g => parseInt(g.replace('CME-', ''), 10))
+      .filter(n => !isNaN(n));
+
+    const maxNumber = cmeOrders.length > 0 ? Math.max(...cmeOrders) : -1;
+    return `CME-${maxNumber + 1}`;
+  };
+
   const [formData, setFormData] = useState<ServiceOrder>(initialOrder || {
     id: `SO-${Date.now()}`,
     client: '',
     status: 'borrador',
     workflow: { includesPickup: true, includesShipping: true, includesDelivery: true },
-    general: { guideNumber: '', sheetName: '', destination: '', deliveryMethod: 'FTL', unit: '', reception: '', delivery: '', secondDelivery: '' },
-    physicalReception: { weight: 0, volume: 0, pieces: 0, unit: 'kg' },
-    physicalDelivery: { weight: 0, volume: 0, pieces: 0, unit: 'kg' },
-    physicalFinal: { weight: 0, volume: 0, pieces: 0, unit: 'kg' },
-    merchandise: { product: '', type: '', isRefrigerated: false },
+    general: {
+      guideNumber: generateNextGuideNumber(),
+      sheetName: '',
+      destination: '',
+      deliveryMethod: 'Ocurre',
+      unit: '',
+      reception: '',
+      delivery: '',
+      secondDelivery: ''
+    },
+    physicalReception: { weight: 0, volume: 0, pieces: 0, unitMeasure: 'kg' },
+    physicalDelivery: { weight: 0, volume: 0, pieces: 0, unitMeasure: 'kg' },
+    physicalFinal: { weight: 0, volume: 0, pieces: 0, unitMeasure: 'kg' },
+    merchandise: { product: '', type: '', isRefrigerated: false, receptionConservation: '' },
     logistics: { palletWeight: 0, palletCount: 0 },
-    documentation: { receptionDate: new Date().toISOString().split('T')[0], clientInvoice: '', invoiceValue: 0 }
+    documentation: { receptionDate: new Date().toISOString().split('T')[0], insurance: '', clientInvoice: '', invoiceValue: 0, shippingMethod: '', paymentMethod: '', requiresInvoice: false }
   });
 
   const handleChange = (section: keyof ServiceOrder, field: string, value: any) => {
@@ -160,19 +181,10 @@ const CreateServiceOrder: React.FC<{
               <div className="col-span-1">
                 <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">No. Guía</label>
                 <input
-                  className="w-full border-slate-200 rounded-xl text-sm font-semibold"
+                  className="w-full border-slate-200 rounded-xl text-sm font-semibold bg-slate-50 cursor-not-allowed"
                   value={formData.general.guideNumber}
-                  onChange={(e) => handleChange('general', 'guideNumber', e.target.value)}
-                  placeholder="SO-2024-..."
-                />
-              </div>
-              <div className="col-span-1">
-                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Nombre de hoja</label>
-                <input
-                  className="w-full border-slate-200 rounded-xl text-sm font-semibold"
-                  value={formData.general.sheetName}
-                  onChange={(e) => handleChange('general', 'sheetName', e.target.value)}
-                  placeholder="Ticket..."
+                  readOnly
+                  placeholder="CME-0"
                 />
               </div>
               <div className="col-span-1">
@@ -190,18 +202,22 @@ const CreateServiceOrder: React.FC<{
                   value={formData.general.deliveryMethod}
                   onChange={(e) => handleChange('general', 'deliveryMethod', e.target.value)}
                 >
-                  <option>FTL</option>
-                  <option>LTL</option>
+                  <option value="Ocurre">Ocurre</option>
+                  <option value="Domicilio">Domicilio</option>
                 </select>
               </div>
               <div className="col-span-1">
-                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Unidad (Número)</label>
-                <input
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Unidad (Hub Operativo)</label>
+                <select
                   className="w-full border-slate-200 rounded-xl text-sm font-semibold"
                   value={formData.general.unit}
                   onChange={(e) => handleChange('general', 'unit', e.target.value)}
-                  placeholder="Ej. 53, Rabón"
-                />
+                >
+                  <option value="">Seleccionar Unidad...</option>
+                  {FLEET_DATA.map(unit => (
+                    <option key={unit.id} value={unit.id}>{unit.id} - {unit.type}</option>
+                  ))}
+                </select>
               </div>
               <div className="col-span-1">
                 <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Recepción</label>
@@ -532,6 +548,7 @@ const ServiceOrders: React.FC = () => {
     return (
       <CreateServiceOrder
         initialOrder={editingOrder || undefined}
+        existingOrders={orders}
         onSave={handleSave}
         onCancel={() => {
           setView('list');
