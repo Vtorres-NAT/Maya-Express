@@ -60,6 +60,7 @@ export interface Unit {
 export interface ServiceOrder {
   id: string; // Internal ID
   client: string; // Client Name (kept for UI consistency)
+  provider?: string; // Provider Name
   status: 'transito' | 'bodega' | 'confirmada' | 'borrador' | 'cerrada';
 
   // 1. General
@@ -136,4 +137,30 @@ export interface FleetUnit {
   };
   loc: string;
   colorCode: 'emerald' | 'blue' | 'amber' | 'slate' | 'primary';
+}
+
+export interface Client {
+  id: number;
+  client: string;
+  deliveryAddress: string;
+  contactName: string;
+  phone: string;
+  destination: string;
+  deliveryMethod: string;
+  insurance: string;
+  email?: string;
+}
+
+export interface ProductItem {
+  name: string;
+  temperature: string;
+}
+
+export interface Provider {
+  id: number;
+  provider: string;
+  address: string;
+  contactName: string;
+  phone: string;
+  products: ProductItem[];
 }

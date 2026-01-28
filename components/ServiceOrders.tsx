@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { ServiceOrder } from '../types';
 import { MOCK_ORDERS, FLEET_DATA } from '../data/mockData';
+import { useData } from '../context/DataContext';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { useNavigate } from 'react-router-dom';
 
 // Reusable Document Preview (Updated for Nested Data)
 const DocumentPreview: React.FC<{ order: Partial<ServiceOrder> }> = ({ order }) => {
@@ -25,13 +27,13 @@ const DocumentPreview: React.FC<{ order: Partial<ServiceOrder> }> = ({ order }) 
       <div className="grid grid-cols-2 gap-8 text-[11px] mb-8">
         <div className="space-y-1">
           <p className="font-black text-slate-400 uppercase text-[9px]">Shipper / Remitente</p>
-          <p className="font-bold">{order.client || 'Cliente'}</p>
+          <p className="font-bold">{order.provider || 'Proveedor'}</p>
           <p className="text-slate-500">RFC: GEN010101ABC</p>
           <p className="text-slate-500">{order.general?.reception || 'Origen'}</p>
         </div>
         <div className="space-y-1">
           <p className="font-black text-slate-400 uppercase text-[9px]">Consignee / Destinatario</p>
-          <p className="font-bold">{order.general?.destination || 'Destino'}</p>
+          <p className="font-bold">{order.client || 'Cliente'}</p>
           <p className="text-slate-500">RFC: CMM051212ABC</p>
           <p className="text-slate-500">{order.general?.delivery || 'Ubicación Entrega'}</p>
         </div>
@@ -57,7 +59,7 @@ const DocumentPreview: React.FC<{ order: Partial<ServiceOrder> }> = ({ order }) 
       <div className="mt-auto pt-6 border-t border-slate-100 flex justify-between items-end">
         <div className="space-y-1">
           <p className="text-[8px] font-black text-slate-400 uppercase">Digital Seal</p>
-          <p className="text-[7px] font-mono text-slate-400 w-48 break-all">f293h4092h3f0923h4f0923h409f23h40f23h40f23h409f23h40f23h40f23h40f23h40f23h4</p>
+          <p className="text-[7px] font-mono text-slate-400 w-48 break-all">f293h4092h3f0923h4f0923h409f23h40f23h40f23h40f23h40f23h40f23h40f23h40f23h4</p>
         </div>
         <div className="text-right">
           <p className="text-[10px] font-black text-slate-400 uppercase">Valid Signature</p>
@@ -98,6 +100,8 @@ const CreateServiceOrder: React.FC<{
   onSave: (order: ServiceOrder) => void;
   onCancel: () => void;
 }> = ({ initialOrder, existingOrders, onSave, onCancel }) => {
+  const { clients, providers } = useData();
+
   const generateNextGuideNumber = () => {
     const cmeOrders = existingOrders
       .map(o => o.general.guideNumber)
@@ -112,6 +116,7 @@ const CreateServiceOrder: React.FC<{
   const [formData, setFormData] = useState<ServiceOrder>(initialOrder || {
     id: `SO-${Date.now()}`,
     client: '',
+    provider: '',
     status: 'borrador',
     workflow: { includesPickup: true, includesShipping: true, includesDelivery: true },
     general: {
@@ -143,6 +148,53 @@ const CreateServiceOrder: React.FC<{
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleClientSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const clientName = e.target.value;
+    handleTopLevelChange('client', clientName);
+
+    // Autofill logic
+    const selectedClient = clients.find(c => c.client === clientName);
+    if (selectedClient) {
+      setFormData(prev => ({
+        ...prev,
+        client: clientName,
+        general: {
+          ...prev.general,
+          destination: selectedClient.destination,
+          deliveryMethod: selectedClient.deliveryMethod,
+          delivery: selectedClient.deliveryAddress
+        },
+        documentation: {
+          ...prev.documentation,
+          insurance: selectedClient.insurance
+        }
+      }));
+    }
+  };
+
+  const handleProviderSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const providerName = e.target.value;
+    handleTopLevelChange('provider', providerName);
+
+    // Autofill logic
+    const selectedProvider = providers.find(p => p.provider === providerName);
+    if (selectedProvider) {
+      setFormData(prev => ({
+        ...prev,
+        provider: providerName,
+        general: {
+          ...prev.general,
+          reception: selectedProvider.address
+        },
+        // Optional: Prefill product if only one exists
+        merchandise: {
+          ...prev.merchandise,
+          product: selectedProvider.products.length === 1 ? selectedProvider.products[0].name : prev.merchandise.product
+        }
+      }));
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -170,15 +222,6 @@ const CreateServiceOrder: React.FC<{
             <div className="p-6 border-b border-slate-100 bg-slate-50/50"><h3 className="font-black text-brand-navy uppercase text-xs tracking-widest">1. General Information</h3></div>
             <div className="p-8 grid grid-cols-2 gap-6">
               <div className="col-span-1">
-                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Cliente</label>
-                <input
-                  className="w-full border-slate-200 rounded-xl text-sm font-semibold"
-                  value={formData.client}
-                  onChange={(e) => handleTopLevelChange('client', e.target.value)}
-                  placeholder="Nombre del Cliente..."
-                />
-              </div>
-              <div className="col-span-1">
                 <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">No. Guía</label>
                 <input
                   className="w-full border-slate-200 rounded-xl text-sm font-semibold bg-slate-50 cursor-not-allowed"
@@ -186,25 +229,6 @@ const CreateServiceOrder: React.FC<{
                   readOnly
                   placeholder="CME-0"
                 />
-              </div>
-              <div className="col-span-1">
-                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Destino</label>
-                <input
-                  className="w-full border-slate-200 rounded-xl text-sm font-semibold"
-                  value={formData.general.destination}
-                  onChange={(e) => handleChange('general', 'destination', e.target.value)}
-                />
-              </div>
-              <div className="col-span-1">
-                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Forma de entrega</label>
-                <select
-                  className="w-full border-slate-200 rounded-xl text-sm font-semibold"
-                  value={formData.general.deliveryMethod}
-                  onChange={(e) => handleChange('general', 'deliveryMethod', e.target.value)}
-                >
-                  <option value="Ocurre">Ocurre</option>
-                  <option value="Domicilio">Domicilio</option>
-                </select>
               </div>
               <div className="col-span-1">
                 <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Unidad (Hub Operativo)</label>
@@ -219,22 +243,81 @@ const CreateServiceOrder: React.FC<{
                   ))}
                 </select>
               </div>
+
+              {/* CLIENT SELECTION */}
               <div className="col-span-1">
-                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Recepción</label>
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Cliente</label>
+                <div className="relative">
+                  <select
+                    className="w-full border-slate-200 rounded-xl text-sm font-semibold appearance-none"
+                    value={formData.client}
+                    onChange={handleClientSelect}
+                  >
+                    <option value="">Seleccionar Cliente...</option>
+                    {clients.map(c => (
+                      <option key={c.id} value={c.client}>{c.client}</option>
+                    ))}
+                  </select>
+                  <span className="material-symbols-outlined absolute right-3 top-2.5 text-slate-400 pointer-events-none">expand_more</span>
+                </div>
+              </div>
+
+              {/* PROVIDER SELECTION */}
+              <div className="col-span-1">
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Proveedor</label>
+                <div className="relative">
+                  <select
+                    className="w-full border-slate-200 rounded-xl text-sm font-semibold appearance-none"
+                    value={formData.provider || ''}
+                    onChange={handleProviderSelect}
+                  >
+                    <option value="">Seleccionar Proveedor...</option>
+                    {providers.map(p => (
+                      <option key={p.id} value={p.provider}>{p.provider}</option>
+                    ))}
+                  </select>
+                  <span className="material-symbols-outlined absolute right-3 top-2.5 text-slate-400 pointer-events-none">expand_more</span>
+                </div>
+              </div>
+
+              <div className="col-span-1">
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Destino</label>
                 <input
-                  className="w-full border-slate-200 rounded-xl text-sm font-semibold"
-                  value={formData.general.reception}
-                  onChange={(e) => handleChange('general', 'reception', e.target.value)}
-                  placeholder="Lugar Recepción"
+                  className="w-full border-slate-200 rounded-xl text-sm font-semibold bg-slate-50"
+                  value={formData.general.destination}
+                  onChange={(e) => handleChange('general', 'destination', e.target.value)}
+                  placeholder="Automático del cliente..."
                 />
               </div>
               <div className="col-span-1">
-                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Entrega</label>
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Forma de entrega</label>
+                <select
+                  className="w-full border-slate-200 rounded-xl text-sm font-semibold bg-slate-50"
+                  value={formData.general.deliveryMethod}
+                  onChange={(e) => handleChange('general', 'deliveryMethod', e.target.value)}
+                >
+                  <option value="">Seleccionar...</option>
+                  <option value="OCURRE">OCURRE</option>
+                  <option value="DOMICILIO">DOMICILIO</option>
+                </select>
+              </div>
+
+              <div className="col-span-1">
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Recepción (Origen)</label>
                 <input
-                  className="w-full border-slate-200 rounded-xl text-sm font-semibold"
+                  className="w-full border-slate-200 rounded-xl text-sm font-semibold bg-slate-50"
+                  value={formData.general.reception}
+                  onChange={(e) => handleChange('general', 'reception', e.target.value)}
+                  placeholder="Automático del proveedor..."
+                />
+              </div>
+              <div className="col-span-1">
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Entrega (Dirección)</label>
+                <input
+                  className="w-full border-slate-200 rounded-xl text-sm font-semibold bg-slate-50"
                   value={formData.general.delivery}
                   onChange={(e) => handleChange('general', 'delivery', e.target.value)}
-                  placeholder="Lugar Entrega"
+                  placeholder="Automático del cliente..."
                 />
               </div>
             </div>
@@ -304,7 +387,16 @@ const CreateServiceOrder: React.FC<{
                     className="w-full border-slate-200 rounded-lg text-xs"
                     value={formData.merchandise.product}
                     onChange={(e) => handleChange('merchandise', 'product', e.target.value)}
+                    list="provider-products"
                   />
+                  {/* Datalist for products if a provider is selected */}
+                  {formData.provider && (
+                    <datalist id="provider-products">
+                      {providers.find(p => p.provider === formData.provider)?.products.map((prod, idx) => (
+                        <option key={idx} value={prod.name}>{prod.temperature}</option>
+                      ))}
+                    </datalist>
+                  )}
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-slate-400 mb-1">Tipo</label>
@@ -347,6 +439,18 @@ const CreateServiceOrder: React.FC<{
                     value={formData.logistics.palletCount}
                     onChange={(e) => handleChange('logistics', 'palletCount', parseInt(e.target.value))}
                   />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-slate-400 mb-1">Seguro</label>
+                  <select
+                    className="w-full border-slate-200 rounded-lg text-xs"
+                    value={formData.documentation.insurance}
+                    onChange={(e) => handleChange('documentation', 'insurance', e.target.value)}
+                  >
+                    <option value="">Seleccionar...</option>
+                    <option value="SI">SI</option>
+                    <option value="NO">NO</option>
+                  </select>
                 </div>
               </div>
             </div>
@@ -524,8 +628,6 @@ const OrderDetailsModal: React.FC<{ order: ServiceOrder; onClose: () => void; on
     </div>
   );
 };
-
-import { useNavigate } from 'react-router-dom';
 
 const ServiceOrders: React.FC = () => {
   const [orders, setOrders] = useState<ServiceOrder[]>(MOCK_ORDERS);
