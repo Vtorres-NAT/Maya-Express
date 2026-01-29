@@ -23,7 +23,7 @@ const ClientsProviders: React.FC = () => {
 
     // Form State
     const initialClientState: Omit<Client, 'id'> = {
-        client: '', deliveryAddress: '', contactName: '', phone: '', destination: '', deliveryMethod: '', insurance: ''
+        client: '', deliveryAddress: '', contactName: '', phone: '', destination: '', deliveryMethod: '', insurance: '', pickupRequired: ''
     };
 
     const initialProviderState: Omit<Provider, 'id'> = {
@@ -57,6 +57,7 @@ const ClientsProviders: React.FC = () => {
                 destination: client.destination,
                 deliveryMethod: client.deliveryMethod,
                 insurance: client.insurance,
+                pickupRequired: client.pickupRequired || '',
                 email: client.email || ''
             });
         } else {
@@ -134,8 +135,8 @@ const ClientsProviders: React.FC = () => {
                     <button
                         onClick={() => setActiveTab('clients')}
                         className={`px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'clients'
-                                ? 'bg-brand-navy text-white shadow-md'
-                                : 'text-slate-500 hover:bg-slate-50'
+                            ? 'bg-brand-navy text-white shadow-md'
+                            : 'text-slate-500 hover:bg-slate-50'
                             }`}
                     >
                         Clientes
@@ -143,8 +144,8 @@ const ClientsProviders: React.FC = () => {
                     <button
                         onClick={() => setActiveTab('providers')}
                         className={`px-6 py-2.5 rounded-lg text-sm font-bold transition-all ${activeTab === 'providers'
-                                ? 'bg-brand-navy text-white shadow-md'
-                                : 'text-slate-500 hover:bg-slate-50'
+                            ? 'bg-brand-navy text-white shadow-md'
+                            : 'text-slate-500 hover:bg-slate-50'
                             }`}
                     >
                         Proveedores
@@ -215,6 +216,9 @@ const ClientsProviders: React.FC = () => {
                                                 <span className={`px-2 py-1 rounded text-xs font-bold ${item.insurance === 'SI' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>
                                                     Seguro: {item.insurance}
                                                 </span>
+                                                <span className={`px-2 py-1 rounded text-xs font-bold ${item.pickupRequired === 'SI' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>
+                                                    Recolección: {item.pickupRequired || 'N/A'}
+                                                </span>
                                             </div>
                                         </td>
                                         <td className="p-4 text-center">
@@ -260,8 +264,8 @@ const ClientsProviders: React.FC = () => {
                                                     <div key={idx} className="flex items-center gap-2 text-sm">
                                                         <span className="text-slate-700 font-medium">{prod.name}</span>
                                                         <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border ${prod.temperature === 'CONGELADO' ? 'border-blue-200 bg-blue-50 text-blue-600' :
-                                                                prod.temperature === 'REFRIGERADO' ? 'border-cyan-200 bg-cyan-50 text-cyan-600' :
-                                                                    'border-orange-200 bg-orange-50 text-orange-600'
+                                                            prod.temperature === 'REFRIGERADO' ? 'border-cyan-200 bg-cyan-50 text-cyan-600' :
+                                                                'border-orange-200 bg-orange-50 text-orange-600'
                                                             }`}>
                                                             {prod.temperature}
                                                         </span>
@@ -408,6 +412,22 @@ const ClientsProviders: React.FC = () => {
                                             </select>
                                         </div>
                                     </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-bold text-slate-500 uppercase">Recolección</label>
+                                            <select
+                                                required
+                                                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                                value={formDataClient.pickupRequired || ''}
+                                                onChange={(e) => setFormDataClient({ ...formDataClient, pickupRequired: e.target.value })}
+                                            >
+                                                <option value="">Seleccionar...</option>
+                                                <option value="SI">SI</option>
+                                                <option value="NO">NO</option>
+                                            </select>
+                                        </div>
+                                    </div>
                                 </>
                             ) : (
                                 <>
@@ -466,8 +486,8 @@ const ClientsProviders: React.FC = () => {
                                                     <div className="flex items-center gap-3">
                                                         <span className="font-bold text-slate-700 text-sm">{prod.name}</span>
                                                         <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded border ${prod.temperature === 'CONGELADO' ? 'border-blue-200 bg-blue-50 text-blue-600' :
-                                                                prod.temperature === 'REFRIGERADO' ? 'border-cyan-200 bg-cyan-50 text-cyan-600' :
-                                                                    'border-orange-200 bg-orange-50 text-orange-600'
+                                                            prod.temperature === 'REFRIGERADO' ? 'border-cyan-200 bg-cyan-50 text-cyan-600' :
+                                                                'border-orange-200 bg-orange-50 text-orange-600'
                                                             }`}>
                                                             {prod.temperature}
                                                         </span>
