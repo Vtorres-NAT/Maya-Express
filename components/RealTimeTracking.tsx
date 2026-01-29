@@ -41,16 +41,46 @@ const RealTimeTracking: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [activeOrder, setActiveOrder] = useState<ServiceOrder | null>(null);
+  const [orders, setOrders] = useState<ServiceOrder[]>([]);
+
+  // Load orders from localStorage
+  useEffect(() => {
+    const loadOrders = () => {
+      const saved = localStorage.getItem('service_orders_list');
+      if (saved) {
+        try {
+          setOrders(JSON.parse(saved));
+        } catch (e) {
+          console.error('Failed to parse saved orders:', e);
+          setOrders(MOCK_ORDERS);
+        }
+      } else {
+        setOrders(MOCK_ORDERS);
+      }
+    };
+
+    loadOrders();
+
+    // Listen for storage changes (when orders are updated in ServiceOrders)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'service_orders_list') {
+        loadOrders();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   useEffect(() => {
     const guideParam = searchParams.get('guide');
     if (guideParam) {
-      const found = MOCK_ORDERS.find(o => o.general.guideNumber.toLowerCase() === guideParam.toLowerCase());
+      const found = orders.find(o => o.general.guideNumber.toLowerCase() === guideParam.toLowerCase());
       if (found) {
         setActiveOrder(found);
       }
     }
-  }, [searchParams]);
+  }, [searchParams, orders]);
 
 
   // Get dynamic events
@@ -76,7 +106,7 @@ const RealTimeTracking: React.FC = () => {
             className="w-full pl-4 pr-10 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 text-sm font-bold text-brand-navy focus:border-primary focus:bg-white outline-none appearance-none cursor-pointer transition-all"
             value={activeOrder?.general.guideNumber || ''}
             onChange={(e) => {
-              const found = MOCK_ORDERS.find(o => o.general.guideNumber === e.target.value);
+              const found = orders.find(o => o.general.guideNumber === e.target.value);
               if (found) {
                 setActiveOrder(found);
                 setSearchParams({ guide: found.general.guideNumber });
@@ -87,7 +117,7 @@ const RealTimeTracking: React.FC = () => {
             }}
           >
             <option value="">Seleccione un No. de Guía...</option>
-            {MOCK_ORDERS.map((order) => (
+            {orders.map((order) => (
               <option key={order.general.guideNumber} value={order.general.guideNumber}>
                 {order.general.guideNumber} - {order.client}
               </option>

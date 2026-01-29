@@ -1,4 +1,4 @@
-import { ServiceOrder, FleetUnit } from '../types';
+import { ServiceOrder, FleetUnit, Driver } from '../types';
 
 export const MOCK_ORDERS: ServiceOrder[] = [
     {
@@ -28,19 +28,8 @@ export const MOCK_ORDERS: ServiceOrder[] = [
             estArrival: '2024-04-26',
             receptionTemp: '-20°C'
         },
-        assignedUnit: {
-            id: 'PERMON 117 / 193',
-            plates: '13BE3G / 59UV6L',
-            brand: 'VOLVO / UTILITY',
-            color: 'BLANCO',
-            type: 'REFRIGERADO MERIDA'
-        },
-        assignedDriver: {
-            name: 'ERICK ALAN SANTYIESTEBAN OROZCO',
-            phone: '427 107 2268',
-            license: '00041834',
-            rfc: 'SAOE970311JZ5'
-        },
+        assignedUnit: 'PERMON 117 / 193',
+        assignedDriver: 'DRV-001',
         products: [
             {
                 name: 'Lácteos Congelados',
@@ -80,18 +69,8 @@ export const MOCK_ORDERS: ServiceOrder[] = [
             estArrival: '2024-04-25',
             receptionTemp: 'N/A'
         },
-        assignedUnit: {
-            id: 'FLETES EM-3',
-            plates: '73BF7G / 61UL9T (ECO 2)',
-            brand: 'VOLVO / GRAND DANES',
-            color: 'BLANCO',
-            type: 'CONGELADO'
-        },
-        assignedDriver: {
-            name: 'JUAN CARLOS VERGARA VAZQUEZ',
-            phone: '55 1824 9532',
-            license: 'N/A'
-        },
+        assignedUnit: 'FLETES EM-3',
+        assignedDriver: 'DRV-002',
         products: [
             {
                 name: 'Muebles Oficina',
@@ -130,18 +109,8 @@ export const MOCK_ORDERS: ServiceOrder[] = [
             estArrival: '2024-04-28',
             receptionTemp: '2°C'
         },
-        assignedUnit: {
-            id: 'FLETES EM 3 / ECO 1',
-            plates: '03AJ6J / 70UG2G',
-            brand: 'BLANCO / HUNDAY',
-            color: 'GRIS',
-            type: 'REFRIGERADO'
-        },
-        assignedDriver: {
-            name: 'JOSE ADRIAN GONZAGA RANGEL',
-            phone: '5536982583',
-            license: 'DF001109655'
-        },
+        assignedUnit: 'FLETES EM 3 / ECO 1',
+        assignedDriver: 'DRV-003',
         products: [
             {
                 name: 'Electrónicos',
@@ -158,6 +127,14 @@ export const MOCK_ORDERS: ServiceOrder[] = [
     }
 ];
 
+export const DRIVERS: Driver[] = [
+    { id: 'DRV-001', name: 'ERICK ALAN SANTYIESTEBAN OROZCO', phone: '427 107 2268', license: '00041834', rfc: 'SAOE970311JZ5' },
+    { id: 'DRV-002', name: 'JUAN CARLOS VERGARA VAZQUEZ', phone: '55 1824 9532' },
+    { id: 'DRV-003', name: 'JOSE ADRIAN GONZAGA RANGEL', phone: '5536982583', license: 'DF001109655' },
+    { id: 'DRV-004', name: 'FELIPE RUVALCABA TELLEZ', phone: 'N/A' },
+    { id: 'DRV-005', name: 'GONZALO ENCARNACION VAQUEZ', phone: 'N/A' }
+];
+
 export const FLEET_DATA: FleetUnit[] = [
     {
         id: 'PERMON 117 / 193',
@@ -166,7 +143,7 @@ export const FLEET_DATA: FleetUnit[] = [
         brand: 'VOLCO / UTILITY',
         plates: '13BE3G / 59UV6L',
         color: 'BLANCO',
-        driver: { name: 'ERICK ALAN SANTYIESTEBAN OROZCO', phone: '427 107 2268', license: '00041834', rfc: 'SAOE970311JZ5' },
+        assignedDriverId: 'DRV-001',
         loc: 'Mérida Highway',
         colorCode: 'emerald'
     },
@@ -177,7 +154,7 @@ export const FLEET_DATA: FleetUnit[] = [
         brand: 'VOLCO / GRAND DANES',
         plates: '73BF7G / 61UL9T (ECO 2)',
         color: 'BLANCO',
-        driver: { name: 'JUAN CARLOS VERGARA VAZQUEZ', phone: '55 1824 9532' },
+        assignedDriverId: 'DRV-002',
         loc: 'CDMX Hub',
         colorCode: 'primary'
     },
@@ -188,7 +165,7 @@ export const FLEET_DATA: FleetUnit[] = [
         brand: 'BLANCO / HUNDAY',
         plates: '03AJ6J / 70UG2G',
         color: 'GRIS',
-        driver: { name: 'JOSE ADRIAN GONZAGA RANGEL', phone: '5536982583', license: 'DF001109655' },
+        assignedDriverId: 'DRV-003',
         loc: 'Bajío Route',
         colorCode: 'blue'
     },
@@ -199,7 +176,7 @@ export const FLEET_DATA: FleetUnit[] = [
         brand: 'KENWORTH / WABASH',
         plates: '65BF5G / 78US6V',
         color: 'BLANCO',
-        driver: { name: 'FELIPE RUVALCABA TELLEZ', phone: 'N/A' },
+        assignedDriverId: 'DRV-004',
         loc: 'Service Yard',
         colorCode: 'amber'
     },
@@ -210,7 +187,7 @@ export const FLEET_DATA: FleetUnit[] = [
         brand: 'PROSTAR / WABHAS',
         plates: '41AZ9E / 91TX1F',
         color: 'BLANCO Y ROJO',
-        driver: { name: 'GONZALO ENCARNACION VAQUEZ', phone: 'N/A' },
+        assignedDriverId: 'DRV-005',
         loc: 'Puebla Yard',
         colorCode: 'slate'
     }

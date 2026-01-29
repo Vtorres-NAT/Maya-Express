@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Client, Provider } from '../types';
+import { Client, Provider, Driver, FleetUnit } from '../types';
+import { DRIVERS, FLEET_DATA } from '../data/mockData';
 
 // Mock Data (Moved from ClientsProviders)
 const MOCK_CLIENTS: Client[] = [
@@ -34,6 +35,8 @@ const MOCK_PROVIDERS: Provider[] = [
 interface DataContextType {
     clients: Client[];
     providers: Provider[];
+    drivers: Driver[];
+    units: FleetUnit[];
     addClient: (client: Omit<Client, 'id'>) => void;
     updateClient: (id: number, client: Omit<Client, 'id'>) => void;
     deleteClient: (id: number) => void;
@@ -47,6 +50,8 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [clients, setClients] = useState<Client[]>(MOCK_CLIENTS);
     const [providers, setProviders] = useState<Provider[]>(MOCK_PROVIDERS);
+    const [drivers, setDrivers] = useState<Driver[]>(DRIVERS);
+    const [units, setUnits] = useState<FleetUnit[]>(FLEET_DATA);
 
     const addClient = (clientData: Omit<Client, 'id'>) => {
         const newId = Math.max(...clients.map(c => c.id), 0) + 1;
@@ -78,6 +83,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         <DataContext.Provider value={{
             clients,
             providers,
+            drivers,
+            units,
             addClient,
             updateClient,
             deleteClient,
