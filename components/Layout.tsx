@@ -18,6 +18,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { path: '/orders', label: 'Órdenes de Servicio', icon: 'description' },
     { path: '/billing', label: 'Centro de Facturación', icon: 'receipt_long' },
     { path: '/finance', label: 'Finanzas CXC/CXP', icon: 'account_balance_wallet' },
+    { path: '/clients-providers', label: 'Clientes/Proveedores', icon: 'groups' },
     { path: '/data', label: 'Datos Maestros', icon: 'dataset' },
   ];
 
@@ -35,14 +36,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </div>
         <nav className="p-4 mt-4 space-y-1">
           {navItems.map((item) => (
-            <Link 
+            <Link
               key={item.path}
-              to={item.path} 
-              className={`flex items-center gap-3 px-6 py-3.5 rounded-lg transition-all ${
-                isActive(item.path) 
-                ? 'bg-primary/20 text-blue-400 font-bold border-l-4 border-primary' 
-                : 'text-slate-300 hover:bg-white/5'
-              }`}
+              to={item.path}
+              className={`flex items-center gap-3 px-6 py-3.5 rounded-lg transition-all ${isActive(item.path)
+                  ? 'bg-primary/20 text-blue-400 font-bold border-l-4 border-primary'
+                  : 'text-slate-300 hover:bg-white/5'
+                }`}
             >
               <span className="material-symbols-outlined text-xl">{item.icon}</span>
               <span className="text-sm">{item.label}</span>

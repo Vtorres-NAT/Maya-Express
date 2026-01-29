@@ -8,11 +8,25 @@ export const MOCK_ORDERS: ServiceOrder[] = [
         general: {
             guideNumber: 'SO-2024-1023',
             sheetName: 'Ticket-001',
+            tripNumber: 'V-8822',
             destination: 'Mérida',
             deliveryMethod: 'FTL',
-            unit: 'PERMON 117',
-            reception: 'CDMX Hub',
-            delivery: 'Mérida DC',
+            origin: 'CDMX Hub',
+            receptionDate: '2024-04-24',
+            conservationSystem: 'SI',
+            shippingUnitRefrigeration: 'SI',
+            reception: 'Av. Industrial 123, CDMX',
+            delivery: 'Calle 60, Mérida DC',
+            clientAddress: 'Calle 60, Mérida DC',
+            clientContact: 'Roberto Gomez',
+            clientPhone: '999-123-4567',
+            providerAddress: 'Av. Industrial 123, CDMX',
+            providerContact: 'Carlos Ruiz',
+            providerPhone: '555-987-6543',
+            observations: 'Prioridad alta',
+            estDeparture: '2024-04-24',
+            estArrival: '2024-04-26',
+            receptionTemp: '-20°C'
         },
         assignedUnit: {
             id: 'PERMON 117 / 193',
@@ -27,11 +41,18 @@ export const MOCK_ORDERS: ServiceOrder[] = [
             license: '00041834',
             rfc: 'SAOE970311JZ5'
         },
-        physicalReception: { weight: 12500, volume: 45, pieces: 120, unitMeasure: 'Pallets' },
-        physicalDelivery: { weight: 12450, volume: 45, pieces: 120, unitMeasure: 'Pallets' },
-        physicalFinal: { weight: 12450, volume: 45, pieces: 120, unitMeasure: 'Pallets' },
-        merchandise: { product: 'Lácteos Congelados', isRefrigerated: true, receptionConservation: 'Excelente', type: 'Perecederos' },
-        documentation: { receptionDate: '24 abr 2024', insurance: 'Cobertura Amplia', clientInvoice: 'F-9923', invoiceValue: 150000, shippingMethod: 'Terrestre', paymentMethod: 'Crédito', requiresInvoice: true },
+        products: [
+            {
+                name: 'Lácteos Congelados',
+                temperature: 'CONGELADO',
+                weight: 12500,
+                volume: 45,
+                pieces: 120,
+                unitMeasure: 'Pallets',
+                others: 'Manejo delicado'
+            }
+        ],
+        documentation: { insurance: 'Cobertura Amplia', clientInvoice: 'F-9923', invoiceValue: 150000, shippingMethod: 'PAGADO', paymentMethod: 'TRANSFERENCIA', requiresInvoice: true },
         logistics: { palletWeight: 25, palletCount: 20 },
         workflow: { includesPickup: true, includesShipping: true, includesDelivery: true }
     },
@@ -42,11 +63,22 @@ export const MOCK_ORDERS: ServiceOrder[] = [
         general: {
             guideNumber: 'SO-2024-1024',
             sheetName: 'Ticket-002',
+            tripNumber: 'V-9910',
             destination: 'Querétaro',
             deliveryMethod: 'LTL',
-            unit: 'FLETES EM-3',
-            reception: 'Monterrey',
+            origin: 'Monterrey',
+            receptionDate: '2024-04-24',
+            conservationSystem: 'NO',
+            shippingUnitRefrigeration: 'NO',
+            reception: 'Parque Ind. MTY',
             delivery: 'Qro Store',
+            clientAddress: 'Qro Store Base',
+            clientContact: 'Maria Lopez',
+            clientPhone: '442-987-6543',
+            observations: 'Frágil',
+            estDeparture: '2024-04-24',
+            estArrival: '2024-04-25',
+            receptionTemp: 'N/A'
         },
         assignedUnit: {
             id: 'FLETES EM-3',
@@ -60,11 +92,17 @@ export const MOCK_ORDERS: ServiceOrder[] = [
             phone: '55 1824 9532',
             license: 'N/A'
         },
-        physicalReception: { weight: 3500, volume: 12, pieces: 40, unitMeasure: 'Cajas' },
-        physicalDelivery: { weight: 3500, volume: 12, pieces: 40, unitMeasure: 'Cajas' },
-        physicalFinal: { weight: 3500, volume: 12, pieces: 40, unitMeasure: 'Cajas' },
-        merchandise: { product: 'Muebles Oficina', isRefrigerated: false, receptionConservation: 'Buena', type: 'General' },
-        documentation: { receptionDate: '24 abr 2024', insurance: 'Básica', clientInvoice: 'F-221', invoiceValue: 45000, shippingMethod: 'Terrestre', paymentMethod: 'Contado', requiresInvoice: true },
+        products: [
+            {
+                name: 'Muebles Oficina',
+                temperature: 'SECO',
+                weight: 3500,
+                volume: 12,
+                pieces: 40,
+                unitMeasure: 'Cajas'
+            }
+        ],
+        documentation: { insurance: 'Básica', clientInvoice: 'F-221', invoiceValue: 45000, shippingMethod: 'POR COBRAR', paymentMethod: 'EFECTIVO', requiresInvoice: true },
         logistics: { palletWeight: 15, palletCount: 5 },
         workflow: { includesPickup: false, includesShipping: true, includesDelivery: false }
     },
@@ -75,11 +113,22 @@ export const MOCK_ORDERS: ServiceOrder[] = [
         general: {
             guideNumber: 'SO-2024-1025',
             sheetName: 'Ticket-003',
+            tripNumber: 'V-4431',
             destination: 'Cancún',
             deliveryMethod: 'FTL',
-            unit: 'ECO 1',
-            reception: 'Guadalajara',
+            origin: 'Guadalajara',
+            receptionDate: '2024-04-25',
+            conservationSystem: 'SI',
+            shippingUnitRefrigeration: 'SI',
+            reception: 'GDL Hub',
             delivery: 'Cancún Centro',
+            clientAddress: 'Cancún Centro',
+            clientContact: 'Pedro Martinez',
+            clientPhone: '998-555-0101',
+            observations: 'Cuidado con humedad',
+            estDeparture: '2024-04-25',
+            estArrival: '2024-04-28',
+            receptionTemp: '2°C'
         },
         assignedUnit: {
             id: 'FLETES EM 3 / ECO 1',
@@ -93,11 +142,17 @@ export const MOCK_ORDERS: ServiceOrder[] = [
             phone: '5536982583',
             license: 'DF001109655'
         },
-        physicalReception: { weight: 8200, volume: 22, pieces: 80, unitMeasure: 'Pallets' },
-        physicalDelivery: { weight: 8200, volume: 22, pieces: 80, unitMeasure: 'Pallets' },
-        physicalFinal: { weight: 8200, volume: 22, pieces: 80, unitMeasure: 'Pallets' },
-        merchandise: { product: 'Electrónicos', isRefrigerated: true, receptionConservation: 'Excelente', type: 'Alto Valor' },
-        documentation: { receptionDate: '25 abr 2024', insurance: 'Plus', clientInvoice: 'F-334', invoiceValue: 550000, shippingMethod: 'Terrestre', paymentMethod: 'Transferencia', requiresInvoice: true },
+        products: [
+            {
+                name: 'Electrónicos',
+                temperature: 'REFRIGERADO',
+                weight: 8200,
+                volume: 22,
+                pieces: 80,
+                unitMeasure: 'Pallets'
+            }
+        ],
+        documentation: { insurance: 'Plus', clientInvoice: 'F-334', invoiceValue: 550000, shippingMethod: 'PAGADO', paymentMethod: 'TRANSFERENCIA', requiresInvoice: true },
         logistics: { palletWeight: 18, palletCount: 10 },
         workflow: { includesPickup: true, includesShipping: true, includesDelivery: true }
     }
