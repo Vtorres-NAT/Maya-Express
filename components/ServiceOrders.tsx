@@ -54,7 +54,10 @@ const DocumentPreview: React.FC<{ order: Partial<ServiceOrder> }> = ({ order }) 
           {(order.products || []).map((prod, idx) => (
             <tr key={idx}>
               <td className="py-2 font-mono">50131700</td>
-              <td className="py-2">{prod.name} <span className="text-slate-400">({prod.temperature})</span></td>
+              <td className="py-2 flex items-center gap-2">
+                {prod.name}
+                <TemperatureBadge temp={prod.temperature} />
+              </td>
               <td className="py-2 text-right font-bold">{prod.weight ? `${prod.weight.toLocaleString()} kg` : '0 kg'}</td>
             </tr>
           ))}
@@ -80,6 +83,23 @@ const DocumentPreview: React.FC<{ order: Partial<ServiceOrder> }> = ({ order }) 
         </div>
       </div>
     </div>
+  );
+};
+
+// --- TEMPERATURE STYLING ---
+const getTemperatureStyle = (temp: string) => {
+  const t = temp?.toUpperCase() || '';
+  if (t === 'CONGELADO') return 'bg-[#00CCFF] text-white';
+  if (t === 'SECO') return 'bg-[#FFFF00] text-black';
+  if (t === 'REFRIGERADO') return 'bg-[#FF00FF] text-white';
+  return 'bg-slate-100 text-slate-600';
+};
+
+const TemperatureBadge: React.FC<{ temp: string; label?: string }> = ({ temp, label }) => {
+  return (
+    <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider ${getTemperatureStyle(temp)}`}>
+      {label || temp}
+    </span>
   );
 };
 
@@ -881,13 +901,13 @@ const OrderDetailsModal: React.FC<{ order: ServiceOrder; onClose: () => void; on
                     <div key={i} className="border border-slate-100 rounded-xl p-4 hover:shadow-sm transition-shadow">
                       <div className="flex justify-between items-start mb-3">
                         <p className="text-[10px] font-black uppercase text-slate-600">{prod.name}</p>
-                        <span className="text-[8px] bg-slate-100 px-2 py-0.5 rounded font-bold uppercase text-slate-500">{prod.temperature}</span>
+                        <TemperatureBadge temp={prod.temperature} />
                       </div>
                       <div className="space-y-2">
-                        <div className="flex justify-between text-xs"><span className="text-slate-400">Peso:</span> <span className="font-bold">{prod.weight}</span></div>
+                        <div className="flex justify-between text-xs"><span className="text-slate-400">Peso Bruto:</span> <span className="font-bold">{prod.weight}</span></div>
                         <div className="flex justify-between text-xs"><span className="text-slate-400">Volumen:</span> <span className="font-bold">{prod.volume}</span></div>
                         <div className="flex justify-between text-xs"><span className="text-slate-400">Piezas:</span> <span className="font-bold">{prod.pieces}</span></div>
-                        <div className="flex justify-between text-xs"><span className="text-slate-400">U.M.:</span> <span className="font-bold">{prod.unitMeasure}</span></div>
+                        <div className="flex justify-between text-xs"><span className="text-slate-400">Unidad Medida:</span> <span className="font-bold">{prod.unitMeasure}</span></div>
                       </div>
                     </div>
                   ))}
@@ -902,16 +922,16 @@ const OrderDetailsModal: React.FC<{ order: ServiceOrder; onClose: () => void; on
                     <tbody className="divide-y divide-slate-200/50">
                       <tr><td className="py-2 text-slate-400 font-bold w-1/2">Origen</td><td className="py-2 font-semibold text-brand-navy">{order.general.origin}</td></tr>
                       <tr><td className="py-2 text-slate-400 font-bold">Destino</td><td className="py-2 font-semibold text-brand-navy">{order.general.destination}</td></tr>
-                      <tr><td className="py-2 text-slate-400 font-bold">Fecha Rec.</td><td className="py-2">{order.general.receptionDate}</td></tr>
+                      <tr><td className="py-2 text-slate-400 font-bold">Fecha Recepción</td><td className="py-2">{order.general.receptionDate}</td></tr>
                       <tr><td className="py-2 text-slate-400 font-bold">Cons. Recepción</td><td className="py-2">{order.general.conservationSystem}</td></tr>
-                      <tr><td className="py-2 text-slate-400 font-bold">Temp. Recepción</td><td className="py-2">{order.general.receptionTemp}</td></tr>
+                      <tr><td className="py-2 text-slate-400 font-bold">Temperatura Recepción</td><td className="py-2">{order.general.receptionTemp}</td></tr>
                     </tbody>
                   </table>
                   <table className="w-full text-xs">
                     <tbody className="divide-y divide-slate-200/50">
-                      <tr><td className="py-2 text-slate-400 font-bold w-1/2">Salida (Est)</td><td className="py-2">{order.general.estDeparture}</td></tr>
-                      <tr><td className="py-2 text-slate-400 font-bold">Llegada (Est)</td><td className="py-2">{order.general.estArrival}</td></tr>
-                      <tr><td className="py-2 text-slate-400 font-bold">Refr. Unidad</td><td className="py-2">{order.general.shippingUnitRefrigeration}</td></tr>
+                      <tr><td className="py-2 text-slate-400 font-bold w-1/2">Salida Estimada</td><td className="py-2">{order.general.estDeparture}</td></tr>
+                      <tr><td className="py-2 text-slate-400 font-bold">Llegada Estimada</td><td className="py-2">{order.general.estArrival}</td></tr>
+                      <tr><td className="py-2 text-slate-400 font-bold">Refrigeración Unidad</td><td className="py-2">{order.general.shippingUnitRefrigeration}</td></tr>
                       <tr><td className="py-2 text-slate-400 font-bold">Entrega</td><td className="py-2">{order.general.deliveryMethod}</td></tr>
                     </tbody>
                   </table>
@@ -1053,30 +1073,65 @@ const ServiceOrders: React.FC = () => {
             <table className="w-full text-left">
               <thead className="bg-slate-50/50">
                 <tr>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider">No. Guía</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider">Cliente</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider">Origen</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider">Destino</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider">Producto</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider">Unidad</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider">Fecha</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider">Estado</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider">Acciones</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider sticky left-0 bg-slate-50 z-10 whitespace-nowrap">No. Guía</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">No. Viaje</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Cliente</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Origen</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Destino</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider text-center whitespace-nowrap">Productos</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Unidad</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Fecha Rec.</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Temp. Rec.</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider text-center whitespace-nowrap">Salida Estimada</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider text-center whitespace-nowrap">Llegada Estimada</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider text-center whitespace-nowrap">Seguro</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Factura</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider text-right whitespace-nowrap">Valor</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Forma Pago</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Forma Envío</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider text-center whitespace-nowrap">Req. Factura</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Observaciones</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Estado</th>
+                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {orders.map((order, index) => (
                   <tr
                     key={order.id}
-                    className="hover:bg-slate-50/50 transition-colors cursor-pointer group"
+                    className="hover:bg-slate-50/50 transition-colors cursor-pointer group whitespace-nowrap"
                   >
-                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-brand-navy">{order.general.guideNumber}</td>
+                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-brand-navy sticky left-0 bg-white group-hover:bg-slate-50 z-10">{order.general.guideNumber}</td>
+                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-slate-500">{order.general.tripNumber || '-'}</td>
                     <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-medium text-slate-600">{order.client}</td>
                     <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-slate-600">{order.general.origin || order.general.reception}</td>
                     <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-primary">{order.general.destination}</td>
-                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-medium text-slate-600">{order.products[0]?.name || 'N/A'}</td>
-                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-medium text-slate-600">{order.general.unit || 'Pendiente'}</td>
-                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-medium text-slate-500">{order.documentation.receptionDate}</td>
+                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-center">
+                      <div className="flex flex-col gap-1 items-center">
+                        {order.products.map((p, i) => (
+                          <div key={i} className="flex items-center gap-1">
+                            <span className="text-[10px] font-medium text-slate-600">{p.name}</span>
+                            <TemperatureBadge temp={p.temperature} />
+                          </div>
+                        ))}
+                      </div>
+                    </td>
+                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-medium text-slate-600">{order.assignedUnit?.id || 'Pendiente'}</td>
+                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-medium text-slate-500">{order.general.receptionDate}</td>
+                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-blue-600">{order.general.receptionTemp || '-'}</td>
+                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-medium text-slate-500 text-center">{order.general.estDeparture || '-'}</td>
+                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-medium text-slate-500 text-center">{order.general.estArrival || '-'}</td>
+                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-center">
+                      <span className={order.documentation.insurance === 'SI' ? 'text-emerald-600' : 'text-slate-400'}>{order.documentation.insurance || 'NO'}</span>
+                    </td>
+                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-medium text-slate-600">{order.documentation.clientInvoice || '-'}</td>
+                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-black text-slate-900 text-right">${order.documentation.invoiceValue?.toLocaleString() || '0'}</td>
+                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-[10px] font-bold text-slate-600 uppercase italic">{order.documentation.paymentMethod || '-'}</td>
+                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-[10px] font-bold text-slate-600 uppercase italic">{order.documentation.shippingMethod || '-'}</td>
+                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-center">
+                      <span className={order.documentation.requiresInvoice ? 'text-emerald-600' : 'text-slate-400'}>{order.documentation.requiresInvoice ? 'SI' : 'NO'}</span>
+                    </td>
+                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-[10px] text-slate-500 whitespace-normal min-w-[200px]">{order.general.observations || '-'}</td>
                     <td onClick={() => setSelectedOrder(order)} className="px-6 py-4"><StatusBadge status={order.status} /></td>
                     <td className="px-6 py-4 text-slate-400 flex items-center gap-2">
                       <button onClick={() => setSelectedOrder(order)} className="hover:text-primary transition-colors" title="Ver Detalles">

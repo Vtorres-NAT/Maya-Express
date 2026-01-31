@@ -182,7 +182,7 @@ const ClientsProviders: React.FC = () => {
                             <tr className="bg-slate-50/50 text-slate-500 text-xs uppercase tracking-wider font-bold">
                                 <th className="p-4 w-16 text-center">#</th>
                                 <th className="p-4">{activeTab === 'clients' ? 'Cliente' : 'Proveedor'}</th>
-                                <th className="p-4">{activeTab === 'clients' ? 'Dir. Entrega' : 'Dirección'}</th>
+                                <th className="p-4">{activeTab === 'clients' ? 'Dirección de Entrega' : 'Dirección'}</th>
                                 <th className="p-4">Contacto</th>
                                 <th className="p-4">{activeTab === 'clients' ? 'Detalles Logísticos' : 'Productos / Temperaturas'}</th>
                                 <th className="p-4 w-24 text-center">Acciones</th>
@@ -263,9 +263,10 @@ const ClientsProviders: React.FC = () => {
                                                 {item.products.map((prod, idx) => (
                                                     <div key={idx} className="flex items-center gap-2 text-sm">
                                                         <span className="text-slate-700 font-medium">{prod.name}</span>
-                                                        <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border ${prod.temperature === 'CONGELADO' ? 'border-blue-200 bg-blue-50 text-blue-600' :
-                                                            prod.temperature === 'REFRIGERADO' ? 'border-cyan-200 bg-cyan-50 text-cyan-600' :
-                                                                'border-orange-200 bg-orange-50 text-orange-600'
+                                                        <span className={`text-[10px] uppercase font-black px-1.5 py-0.5 rounded ${prod.temperature === 'CONGELADO' ? 'bg-[#00CCFF] text-white' :
+                                                            prod.temperature === 'SECO' ? 'bg-[#FFFF00] text-black' :
+                                                                prod.temperature === 'REFRIGERADO' ? 'bg-[#FF00FF] text-white' :
+                                                                    'bg-slate-100 text-slate-600'
                                                             }`}>
                                                             {prod.temperature}
                                                         </span>
@@ -485,9 +486,10 @@ const ClientsProviders: React.FC = () => {
                                                 <div key={idx} className="flex items-center justify-between bg-slate-50 p-2 rounded-lg border border-slate-100">
                                                     <div className="flex items-center gap-3">
                                                         <span className="font-bold text-slate-700 text-sm">{prod.name}</span>
-                                                        <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded border ${prod.temperature === 'CONGELADO' ? 'border-blue-200 bg-blue-50 text-blue-600' :
-                                                            prod.temperature === 'REFRIGERADO' ? 'border-cyan-200 bg-cyan-50 text-cyan-600' :
-                                                                'border-orange-200 bg-orange-50 text-orange-600'
+                                                        <span className={`text-[10px] uppercase font-black px-2 py-0.5 rounded ${prod.temperature === 'CONGELADO' ? 'bg-[#00CCFF] text-white' :
+                                                            prod.temperature === 'SECO' ? 'bg-[#FFFF00] text-black' :
+                                                                prod.temperature === 'REFRIGERADO' ? 'bg-[#FF00FF] text-white' :
+                                                                    'bg-slate-100 text-slate-600'
                                                             }`}>
                                                             {prod.temperature}
                                                         </span>
@@ -519,7 +521,7 @@ const ClientsProviders: React.FC = () => {
                                                 />
                                             </div>
                                             <div className="w-full sm:w-40 space-y-1">
-                                                <label className="text-[10px] font-bold text-slate-400 uppercase">Temp.</label>
+                                                <label className="text-[10px] font-bold text-slate-400 uppercase">Temperatura</label>
                                                 <select
                                                     className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                                                     value={newProduct.temperature}
