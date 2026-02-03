@@ -1,4 +1,4 @@
-import { ServiceOrder, FleetUnit } from '../types';
+import { ServiceOrder, FleetUnit, Driver, Unit } from '../types';
 
 export const MOCK_ORDERS: ServiceOrder[] = [
     {
@@ -36,6 +36,7 @@ export const MOCK_ORDERS: ServiceOrder[] = [
             type: 'REFRIGERADO MERIDA'
         },
         assignedDriver: {
+            id: 'D-001',
             name: 'ERICK ALAN SANTYIESTEBAN OROZCO',
             phone: '427 107 2268',
             license: '00041834',
@@ -88,6 +89,7 @@ export const MOCK_ORDERS: ServiceOrder[] = [
             type: 'CONGELADO'
         },
         assignedDriver: {
+            id: 'D-002',
             name: 'JUAN CARLOS VERGARA VAZQUEZ',
             phone: '55 1824 9532',
             license: 'N/A'
@@ -138,6 +140,7 @@ export const MOCK_ORDERS: ServiceOrder[] = [
             type: 'REFRIGERADO'
         },
         assignedDriver: {
+            id: 'D-003',
             name: 'JOSE ADRIAN GONZAGA RANGEL',
             phone: '5536982583',
             license: 'DF001109655'
@@ -158,7 +161,45 @@ export const MOCK_ORDERS: ServiceOrder[] = [
     }
 ];
 
-export const FLEET_DATA: FleetUnit[] = [
+// Derived from previous FLEET_DATA, now separated
+export const MOCK_DRIVERS: Driver[] = [
+    {
+        id: 'D-001',
+        name: 'ERICK ALAN SANTYIESTEBAN OROZCO',
+        phone: '427 107 2268',
+        license: '00041834',
+        rfc: 'SAOE970311JZ5',
+        status: 'Active',
+        photourl: ''
+    },
+    {
+        id: 'D-002',
+        name: 'JUAN CARLOS VERGARA VAZQUEZ',
+        phone: '55 1824 9532',
+        status: 'Active'
+    },
+    {
+        id: 'D-003',
+        name: 'JOSE ADRIAN GONZAGA RANGEL',
+        phone: '5536982583',
+        license: 'DF001109655',
+        status: 'Active'
+    },
+    {
+        id: 'D-004',
+        name: 'FELIPE RUVALCABA TELLEZ',
+        phone: 'N/A',
+        status: 'On Leave'
+    },
+    {
+        id: 'D-005',
+        name: 'GONZALO ENCARNACION VAQUEZ',
+        phone: 'N/A',
+        status: 'Inactive'
+    }
+];
+
+export const MOCK_UNITS: Unit[] = [
     {
         id: 'PERMON 117 / 193',
         status: 'In Transit',
@@ -166,7 +207,6 @@ export const FLEET_DATA: FleetUnit[] = [
         brand: 'VOLCO / UTILITY',
         plates: '13BE3G / 59UV6L',
         color: 'BLANCO',
-        driver: { name: 'ERICK ALAN SANTYIESTEBAN OROZCO', phone: '427 107 2268', license: '00041834', rfc: 'SAOE970311JZ5' },
         loc: 'Mérida Highway',
         colorCode: 'emerald'
     },
@@ -177,7 +217,6 @@ export const FLEET_DATA: FleetUnit[] = [
         brand: 'VOLCO / GRAND DANES',
         plates: '73BF7G / 61UL9T (ECO 2)',
         color: 'BLANCO',
-        driver: { name: 'JUAN CARLOS VERGARA VAZQUEZ', phone: '55 1824 9532' },
         loc: 'CDMX Hub',
         colorCode: 'primary'
     },
@@ -188,7 +227,6 @@ export const FLEET_DATA: FleetUnit[] = [
         brand: 'BLANCO / HUNDAY',
         plates: '03AJ6J / 70UG2G',
         color: 'GRIS',
-        driver: { name: 'JOSE ADRIAN GONZAGA RANGEL', phone: '5536982583', license: 'DF001109655' },
         loc: 'Bajío Route',
         colorCode: 'blue'
     },
@@ -199,7 +237,6 @@ export const FLEET_DATA: FleetUnit[] = [
         brand: 'KENWORTH / WABASH',
         plates: '65BF5G / 78US6V',
         color: 'BLANCO',
-        driver: { name: 'FELIPE RUVALCABA TELLEZ', phone: 'N/A' },
         loc: 'Service Yard',
         colorCode: 'amber'
     },
@@ -210,8 +247,14 @@ export const FLEET_DATA: FleetUnit[] = [
         brand: 'PROSTAR / WABHAS',
         plates: '41AZ9E / 91TX1F',
         color: 'BLANCO Y ROJO',
-        driver: { name: 'GONZALO ENCARNACION VAQUEZ', phone: 'N/A' },
         loc: 'Puebla Yard',
         colorCode: 'slate'
     }
 ];
+
+// Combine for backward compatibility if needed, or we can just use the new arrays.
+// For now, let's keep valid FleetUnit objects by mapping.
+export const FLEET_DATA: FleetUnit[] = MOCK_UNITS.map((u, i) => ({
+    ...u,
+    driver: MOCK_DRIVERS[i] || MOCK_DRIVERS[0] // fallback
+})) as unknown as FleetUnit[];

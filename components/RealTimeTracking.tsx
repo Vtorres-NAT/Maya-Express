@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { APIProvider, Map, useMapsLibrary, useMap, AdvancedMarker, Pin } from '@vis.gl/react-google-maps';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { MOCK_ORDERS } from '../data/mockData';
+import { useData } from '../context/DataContext';
 import { ServiceOrder } from '../types';
 import { getWorkflowEvents } from '../utils/workflow';
 
@@ -38,19 +38,20 @@ const Directions = () => {
 };
 
 const RealTimeTracking: React.FC = () => {
+  const { orders } = useData();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [activeOrder, setActiveOrder] = useState<ServiceOrder | null>(null);
 
   useEffect(() => {
     const guideParam = searchParams.get('guide');
-    if (guideParam) {
-      const found = MOCK_ORDERS.find(o => o.general.guideNumber.toLowerCase() === guideParam.toLowerCase());
+    if (guideParam && orders.length > 0) {
+      const found = orders.find(o => o.general.guideNumber.toLowerCase() === guideParam.toLowerCase());
       if (found) {
         setActiveOrder(found);
       }
     }
-  }, [searchParams]);
+  }, [searchParams, orders]);
 
 
   // Get dynamic events
@@ -76,7 +77,7 @@ const RealTimeTracking: React.FC = () => {
             className="w-full pl-4 pr-10 py-3 rounded-xl border-2 border-slate-100 bg-slate-50 text-sm font-bold text-brand-navy focus:border-primary focus:bg-white outline-none appearance-none cursor-pointer transition-all"
             value={activeOrder?.general.guideNumber || ''}
             onChange={(e) => {
-              const found = MOCK_ORDERS.find(o => o.general.guideNumber === e.target.value);
+              const found = orders.find(o => o.general.guideNumber === e.target.value);
               if (found) {
                 setActiveOrder(found);
                 setSearchParams({ guide: found.general.guideNumber });
@@ -87,7 +88,7 @@ const RealTimeTracking: React.FC = () => {
             }}
           >
             <option value="">Seleccione un No. de Guía...</option>
-            {MOCK_ORDERS.map((order) => (
+            {orders.map((order) => (
               <option key={order.general.guideNumber} value={order.general.guideNumber}>
                 {order.general.guideNumber} - {order.client}
               </option>

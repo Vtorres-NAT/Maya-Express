@@ -1,7 +1,7 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import LogisticsAssistant from './LogisticsAssistant';
+import { useAuth } from '../context/AuthContext';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -9,6 +9,7 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
+  const { profile, signOut } = useAuth();
   const isActive = (path: string) => location.pathname === path;
 
   const navItems = [
@@ -31,7 +32,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <h1 className="font-black text-2xl leading-none tracking-tight">
               MAYA <span className="text-blue-400">EXPRESS</span>
             </h1>
-            <p className="text-[9px] uppercase tracking-widest text-slate-400 font-semibold mt-1">Enterprise Suite v3.2</p>
           </div>
         </div>
         <nav className="p-4 mt-4 space-y-1">
@@ -40,8 +40,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               key={item.path}
               to={item.path}
               className={`flex items-center gap-3 px-6 py-3.5 rounded-lg transition-all ${isActive(item.path)
-                  ? 'bg-primary/20 text-blue-400 font-bold border-l-4 border-primary'
-                  : 'text-slate-300 hover:bg-white/5'
+                ? 'bg-primary/20 text-blue-400 font-bold border-l-4 border-primary'
+                : 'text-slate-300 hover:bg-white/5'
                 }`}
             >
               <span className="material-symbols-outlined text-xl">{item.icon}</span>
@@ -74,11 +74,28 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
             <div className="flex items-center gap-4 pl-6 border-l border-slate-200">
               <div className="text-right">
-                <p className="text-sm font-bold text-brand-navy leading-none">Administrador</p>
-                <p className="text-[10px] font-bold text-primary mt-1 uppercase tracking-tighter tracking-widest">CFO Logística</p>
+                <p className="text-sm font-bold text-brand-navy leading-none">{profile?.fullName || 'User'}</p>
+                <p className="text-[10px] font-bold text-primary mt-1 uppercase tracking-widest">{profile?.role || 'Guest'}</p>
               </div>
-              <div className="w-10 h-10 bg-slate-100 rounded-full border border-slate-200 overflow-hidden">
-                <img alt="User" src="https://picsum.photos/seed/erp/100/100" />
+              <div className="relative group">
+                <div className="w-10 h-10 bg-slate-100 rounded-full border border-slate-200 overflow-hidden cursor-pointer">
+                  <img alt="User" src={profile?.avatarUrl || "https://picsum.photos/seed/erp/100/100"} />
+                </div>
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-200 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <button
+                    onClick={async () => {
+                      try {
+                        await signOut();
+                      } catch (err) {
+                        console.error('Logout failed:', err);
+                      }
+                    }}
+                    className="flex items-center gap-3 w-full px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-red-600 transition-all font-bold"
+                  >
+                    <span className="material-symbols-outlined text-lg font-bold">logout</span>
+                    SIGN OUT
+                  </button>
+                </div>
               </div>
             </div>
           </div>

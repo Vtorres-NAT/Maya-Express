@@ -19,7 +19,7 @@ const ClientsProviders: React.FC = () => {
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingId, setEditingId] = useState<number | null>(null);
+    const [editingId, setEditingId] = useState<string | null>(null);
 
     // Form State
     const initialClientState: Omit<Client, 'id'> = {
@@ -74,15 +74,15 @@ const ClientsProviders: React.FC = () => {
         setIsModalOpen(true);
     };
 
-    const handleDeleteClientAction = (id: number) => {
+    const handleDeleteClientAction = async (id: string) => {
         if (window.confirm('¿Estás seguro de eliminar este cliente?')) {
-            deleteClient(id);
+            await deleteClient(id);
         }
     };
 
-    const handleDeleteProviderAction = (id: number) => {
+    const handleDeleteProviderAction = async (id: string) => {
         if (window.confirm('¿Estás seguro de eliminar este proveedor?')) {
-            deleteProvider(id);
+            await deleteProvider(id);
         }
     };
 
@@ -105,19 +105,19 @@ const ClientsProviders: React.FC = () => {
         });
     };
 
-    const handleSave = (e: React.FormEvent) => {
+    const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         if (activeTab === 'clients') {
             if (editingId) {
-                updateClient(editingId, formDataClient);
+                await updateClient(editingId, formDataClient);
             } else {
-                addClient(formDataClient);
+                await addClient(formDataClient);
             }
         } else {
             if (editingId) {
-                updateProvider(editingId, formDataProvider);
+                await updateProvider(editingId, formDataProvider);
             } else {
-                addProvider(formDataProvider);
+                await addProvider(formDataProvider);
             }
         }
         setIsModalOpen(false);

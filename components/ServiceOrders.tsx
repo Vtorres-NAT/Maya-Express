@@ -7,10 +7,14 @@ import jsPDF from 'jspdf';
 import { useNavigate } from 'react-router-dom';
 
 // Reusable Document Preview (Updated for Nested Data)
-const DocumentPreview: React.FC<{ order: Partial<ServiceOrder> }> = ({ order }) => {
+const DocumentPreview: React.FC<{ order: Partial<ServiceOrder>; id?: string }> = ({ order, id = "document-preview-content" }) => {
   return (
-    <div id="document-preview-content" className="bg-white rounded shadow-2xl p-10 text-slate-900 flex-1 flex flex-col scale-95 origin-top h-full min-h-[600px]">
-      <div className="flex justify-between items-start mb-8 border-b-2 border-slate-900 pb-6">
+    <div
+      id={id}
+      className="bg-white p-12 text-slate-900 shadow-2xl w-full mx-auto flex flex-col min-h-[297mm] h-auto overflow-visible print:shadow-none print:p-0"
+      style={{ maxWidth: '210mm' }}
+    >
+      <div className="flex justify-between items-start mb-10 border-b-2 border-slate-900 pb-8">
         <div>
           <h4 className="font-black text-2xl uppercase leading-none tracking-tighter">MAYA<br /><span className="text-primary">EXPRESS</span></h4>
           <p className="text-[9px] font-bold text-slate-400 uppercase mt-2">Logistics Enterprise Solutions</p>
@@ -32,44 +36,141 @@ const DocumentPreview: React.FC<{ order: Partial<ServiceOrder> }> = ({ order }) 
           <p className="font-black text-slate-400 uppercase text-[9px]">Shipper / Remitente</p>
           <p className="font-bold">{order.provider || 'Proveedor'}</p>
           <p className="text-slate-500">{order.general?.providerAddress}</p>
-          <p className="text-slate-500">{order.general?.reception || 'Origen'}</p>
+          {order.general?.reception && order.general.reception !== order.general.providerAddress && (
+            <p className="text-slate-500">{order.general.reception}</p>
+          )}
         </div>
         <div className="space-y-1">
           <p className="font-black text-slate-400 uppercase text-[9px]">Consignee / Destinatario</p>
           <p className="font-bold">{order.client || 'Cliente'}</p>
           <p className="text-slate-500">{order.general?.clientAddress}</p>
-          <p className="text-slate-500">{order.general?.delivery || 'Ubicación Entrega'}</p>
+          {order.general?.delivery && order.general.delivery !== order.general.clientAddress && (
+            <p className="text-slate-500">{order.general.delivery}</p>
+          )}
         </div>
       </div>
 
-      <table className="w-full text-[10px] border-y-2 border-slate-200 py-4 mb-6">
-        <thead>
-          <tr className="text-slate-400 font-black uppercase text-[8px]">
-            <th className="text-left pb-2">Clave Producto</th>
-            <th className="text-left pb-2">Descripción</th>
-            <th className="text-right pb-2">Peso Bruto</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-100">
-          {(order.products || []).map((prod, idx) => (
-            <tr key={idx}>
-              <td className="py-2 font-mono">50131700</td>
-              <td className="py-2 flex items-center gap-2">
-                {prod.name}
-                <TemperatureBadge temp={prod.temperature} />
-              </td>
-              <td className="py-2 text-right font-bold">{prod.weight ? `${prod.weight.toLocaleString()} kg` : '0 kg'}</td>
-            </tr>
-          ))}
-          {(order.products || []).length === 0 && (
+      {/* Detailed Products Table matching Reference Image */}
+      <div className="mb-6 rounded-lg border border-slate-200 overflow-hidden">
+        <table className="w-full text-[9px]">
+          <thead className="bg-brand-navy text-white uppercase font-black text-[8px]">
             <tr>
-              <td className="py-2 font-mono">-</td>
-              <td className="py-2 text-slate-400 italic">No products selected</td>
-              <td className="py-2 text-right font-bold">0 kg</td>
+              <th className="py-2 px-2 text-left w-[25%]">Producto / Descripción</th>
+              <th className="py-2 px-1 text-center text-blue-200 w-[10%]">Temp.</th>
+              <th className="py-2 px-1 text-center w-[10%]">Volumen</th>
+              <th className="py-2 px-1 text-center w-[10%]">Piezas</th>
+              <th className="py-2 px-1 text-center w-[10%]">U. Medida</th>
+              <th className="py-2 px-1 text-center w-[10%]">Peso</th>
+              <th className="py-2 px-2 text-left w-[25%]">Notas / Otros</th>
             </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-slate-200">
+            {(order.products || []).map((prod, idx) => (
+              <tr key={idx} className="bg-white hover:bg-slate-50 transition-colors">
+                <td className="py-2 px-2 font-bold text-slate-700">{prod.name}</td>
+                <td className="py-2 px-1 text-center">
+                  <span className={`px-1 py-0.5 rounded text-[7px] font-black uppercase ${getTemperatureStyle(prod.temperature)}`}>
+                    {prod.temperature}
+                  </span>
+                </td>
+                <td className="py-2 px-1 text-center font-mono">{prod.volume || '-'}</td>
+                <td className="py-2 px-1 text-center font-mono font-bold">{prod.pieces || '-'}</td>
+                <td className="py-2 px-1 text-center lowercase text-slate-500">{prod.unitMeasure}</td>
+                <td className="py-2 px-1 text-center font-bold">{prod.weight ? `${prod.weight.toLocaleString()} kg` : '-'}</td>
+                <td className="py-2 px-2 text-slate-500 italic truncate max-w-[120px]">{prod.others || '-'}</td>
+              </tr>
+            ))}
+            {(order.products || []).length === 0 && (
+              <tr>
+                <td colSpan={7} className="py-6 text-center text-slate-400 italic bg-slate-50">
+                  <span className="material-symbols-outlined text-xl mb-1 block">inventory_2</span>
+                  No hay productos registrados
+                </td>
+              </tr>
+            )}
+          </tbody>
+          <tfoot className="bg-slate-100 font-bold border-t border-slate-200">
+            <tr>
+              <td colSpan={2} className="py-2 px-3 text-right uppercase text-slate-500">Totales:</td>
+              <td className="py-2 px-2 text-center">{order.products?.reduce((sum, p) => sum + (p.volume || 0), 0) || 0}</td>
+              <td className="py-2 px-2 text-center">{order.products?.reduce((sum, p) => sum + (p.pieces || 0), 0) || 0}</td>
+              <td className="py-2 px-2 text-center">-</td>
+              <td className="py-2 px-2 text-center">{order.products?.reduce((sum, p) => sum + (p.weight || 0), 0) || 0} kg</td>
+              <td className="py-2 px-3"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      {/* Logistics & Transport Details - Preview */}
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+          <h5 className="text-[9px] font-black text-slate-400 uppercase mb-2">Detalles de Traslado</h5>
+          <div className="space-y-1 text-[9px]">
+            <div className="flex justify-between"><span className="text-slate-500">Fecha Recep.:</span> <span className="font-bold">{order.general?.receptionDate || '-'}</span></div>
+            <div className="flex justify-between"><span className="text-slate-500">Temp. Recep.:</span> <span className="font-bold">{order.general?.receptionTemp || '-'}</span></div>
+            <div className="flex justify-between"><span className="text-slate-500">Cons. Sistema:</span> <span className="font-bold">{order.general?.conservationSystem || '-'}</span></div>
+            <div className="flex justify-between"><span className="text-slate-500">Refrig. Unidad:</span> <span className="font-bold">{order.general?.shippingUnitRefrigeration || '-'}</span></div>
+            <div className="flex justify-between"><span className="text-slate-500">Salida Est.:</span> <span className="font-bold">{order.general?.estDeparture || '-'}</span></div>
+            <div className="flex justify-between"><span className="text-slate-500">Llegada Est.:</span> <span className="font-bold">{order.general?.estArrival || '-'}</span></div>
+          </div>
+        </div>
+        <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 flex flex-col justify-between">
+          <div>
+            <h5 className="text-[9px] font-black text-slate-400 uppercase mb-2">Documentación y Logística</h5>
+            <div className="space-y-1 text-[9px]">
+              <div className="flex justify-between"><span className="text-slate-500">Seguro de Carga:</span> <span className="font-bold">{order.documentation?.insurance || '-'}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Valor Factura:</span> <span className="font-bold">${order.documentation?.invoiceValue?.toLocaleString() || '0'}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Factura Cliente:</span> <span className="font-bold">{order.documentation?.clientInvoice || '-'}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Forma Pago:</span> <span className="font-bold">{order.documentation?.paymentMethod || '-'}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Tarimas:</span> <span className="font-bold">{order.logistics?.palletCount || '0'}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">Peso Tarima:</span> <span className="font-bold">{order.logistics?.palletWeight || '0'} kg</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {order.general?.observations && (
+        <div className="mb-6 p-3 bg-amber-50 border border-amber-100 rounded-lg">
+          <h5 className="text-[9px] font-black text-amber-500 uppercase mb-1">Observaciones</h5>
+          <p className="text-[9px] text-slate-700 italic">{order.general.observations}</p>
+        </div>
+      )}
+
+      {/* Driver & Unit Info - Preview */}
+      {
+        (order.assignedUnit || order.assignedDriver) && (
+          <div className="mb-6 p-4 bg-slate-50 border border-slate-200 rounded-lg grid grid-cols-2 gap-4">
+            {order.assignedUnit && (
+              <div>
+                <h5 className="text-[9px] font-black text-slate-400 uppercase mb-1">Unidad Asignada</h5>
+                <p className="font-bold text-[10px] uppercase">{order.assignedUnit.id}</p>
+                <p className="text-[9px] text-slate-500">{order.assignedUnit.plates} • {order.assignedUnit.type}</p>
+              </div>
+            )}
+            {order.assignedDriver && (
+              <div>
+                <h5 className="text-[9px] font-black text-slate-400 uppercase mb-1">Operador</h5>
+                <p className="font-bold text-[10px] uppercase">{order.assignedDriver.name}</p>
+                <p className="text-[9px] text-slate-500">Lic: {order.assignedDriver.license}</p>
+              </div>
+            )}
+          </div>
+        )
+      }
+
+      {order.attachments && order.attachments.length > 0 && (
+        <div className="mb-6">
+          <h5 className="text-[9px] font-black text-slate-400 uppercase mb-2">Evidencia Fotográfica</h5>
+          <div className="grid grid-cols-4 gap-2">
+            {order.attachments.map((src, index) => (
+              <div key={index} className="aspect-square rounded border border-slate-200 overflow-hidden">
+                <img src={src} alt={`Evidencia ${index + 1}`} className="w-full h-full object-cover" />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="mt-auto pt-6 border-t border-slate-100 flex justify-between items-end">
         <div className="space-y-1">
@@ -82,7 +183,7 @@ const DocumentPreview: React.FC<{ order: Partial<ServiceOrder> }> = ({ order }) 
           <p className="text-[8px] font-bold">OPERACIONES LOGÍSTICAS</p>
         </div>
       </div>
-    </div>
+    </div >
   );
 };
 
@@ -101,6 +202,54 @@ const TemperatureBadge: React.FC<{ temp: string; label?: string }> = ({ temp, la
       {label || temp}
     </span>
   );
+};
+
+// --- PDF GENERATION HELPER ---
+const downloadAsPDF = (elementId: string, filename: string) => {
+  const input = document.getElementById(elementId);
+  if (!input) return;
+
+  // Add a temporary class to ensure the element is captured at its full height and width
+  input.style.width = "210mm";
+  input.style.height = "auto";
+
+  html2canvas(input, {
+    scale: 2, // Higher quality
+    useCORS: true,
+    backgroundColor: '#ffffff',
+    windowWidth: input.scrollWidth,
+    windowHeight: input.scrollHeight
+  }).then((canvas) => {
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+
+    const imgWidth = 210; // A4 width in mm
+    const pageHeight = 295; // A4 height in mm (slightly less to account for margins)
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    let heightLeft = imgHeight;
+
+    let position = 0;
+
+    // Page 1
+    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+
+    // Additional pages if needed
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight; // Offset the image to show the next part
+      // Correction for proper multi-page slicing
+      const slicePosition = -(imgHeight - heightLeft);
+      pdf.addPage();
+      pdf.addImage(imgData, 'PNG', 0, slicePosition, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+    }
+
+    pdf.save(filename);
+
+    // Reset styles after capture
+    input.style.width = "";
+    input.style.height = "";
+  });
 };
 
 const StatusBadge: React.FC<{ status: ServiceOrder['status'] }> = ({ status }) => {
@@ -125,6 +274,69 @@ const StatusBadge: React.FC<{ status: ServiceOrder['status'] }> = ({ status }) =
   );
 };
 
+// --- FORM SECTION COMPONENT (Moved outside to prevent focus loss) ---
+const FormSection = ({
+  step,
+  title,
+  icon,
+  colorClass,
+  children,
+  isLast = false,
+  activeSection,
+  onToggle,
+  onNext
+}: {
+  step: number;
+  title: string;
+  icon: string;
+  colorClass: string;
+  children: React.ReactNode;
+  isLast?: boolean;
+  activeSection: number;
+  onToggle: (step: number) => void;
+  onNext: (current: number) => void;
+}) => {
+  const isActive = activeSection === step;
+  const isCompleted = activeSection > step;
+
+  return (
+    <div className={`bg-white rounded-3xl border transition-all duration-300 overflow-hidden ${isActive ? 'border-primary/50 shadow-lg ring-1 ring-primary/10' : 'border-slate-200 shadow-sm opacity-80'}`}>
+      <div
+        onClick={() => onToggle(step)}
+        className={`p-6 border-b border-slate-100 flex items-center justify-between cursor-pointer transition-colors ${isActive ? 'bg-slate-50/80' : 'bg-white hover:bg-slate-50'}`}
+      >
+        <div className="flex items-center gap-3">
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black transition-colors ${isActive ? 'bg-primary text-white' : isCompleted ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
+            {isCompleted ? <span className="material-symbols-outlined text-sm">check</span> : step}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className={`material-symbols-outlined text-lg ${colorClass}`}>{icon}</span>
+            <h3 className={`font-black uppercase text-xs tracking-widest ${isActive ? 'text-brand-navy' : 'text-slate-400'}`}>{title}</h3>
+          </div>
+        </div>
+        <span className={`material-symbols-outlined text-slate-400 transition-transform duration-300 ${isActive ? 'rotate-180' : ''}`}>expand_more</span>
+      </div>
+
+      <div className={`transition-all duration-300 ease-in-out ${isActive ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+        <div className="p-8 space-y-6">
+          {children}
+          {!isLast && (
+            <div className="flex justify-end pt-4 border-t border-slate-50">
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onNext(step); }}
+                className="px-6 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-slate-800 transition-colors flex items-center gap-2"
+              >
+                Siguiente <span className="material-symbols-outlined text-sm">arrow_forward</span>
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // --- CREATE/EDIT FORM ---
 const CreateServiceOrder: React.FC<{
   initialOrder?: ServiceOrder;
@@ -132,7 +344,7 @@ const CreateServiceOrder: React.FC<{
   onSave: (order: ServiceOrder) => void;
   onCancel: () => void;
 }> = ({ initialOrder, existingOrders, onSave, onCancel }) => {
-  const { clients, providers } = useData();
+  const { clients, providers, drivers, units } = useData();
 
   const generateNextGuideNumber = () => {
     const cmeOrders = existingOrders
@@ -145,6 +357,17 @@ const CreateServiceOrder: React.FC<{
     return `CME-${maxNumber + 1}`;
   };
 
+  const generateTripNumber = () => {
+    const tripOrders = existingOrders
+      .map(o => o.general.tripNumber)
+      .filter(t => t && t.startsWith('TR-'))
+      .map(t => parseInt(t.replace('TR-', ''), 10))
+      .filter(n => !isNaN(n));
+
+    const maxTrip = tripOrders.length > 0 ? Math.max(...tripOrders) : 1000;
+    return `TR-${maxTrip + 1}`;
+  };
+
   const [formData, setFormData] = useState<ServiceOrder>(initialOrder || {
     id: `SO-${Date.now()}`,
     client: '',
@@ -154,7 +377,7 @@ const CreateServiceOrder: React.FC<{
     general: {
       guideNumber: generateNextGuideNumber(),
       sheetName: '',
-      tripNumber: '',
+      tripNumber: generateTripNumber(),
       destination: '',
       deliveryMethod: 'Ocurre',
       origin: '',
@@ -178,7 +401,8 @@ const CreateServiceOrder: React.FC<{
     },
     products: [],
     logistics: { palletWeight: 0, palletCount: 0 },
-    documentation: { insurance: '', clientInvoice: '', invoiceValue: 0, shippingMethod: '', paymentMethod: '', requiresInvoice: false }
+    documentation: { insurance: '', clientInvoice: '', invoiceValue: 0, shippingMethod: '', paymentMethod: '', requiresInvoice: false },
+    attachments: [] // Initialize attachments
   });
 
   const handleChange = (section: keyof ServiceOrder, field: string, value: any) => {
@@ -309,196 +533,213 @@ const CreateServiceOrder: React.FC<{
     }));
   };
 
+  // --- ATTACHMENTS HANDLING ---
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      Array.from(e.target.files).forEach((file: File) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          if (reader.result) {
+            setFormData(prev => ({
+              ...prev,
+              attachments: [...(prev.attachments || []), reader.result as string]
+            }));
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  };
+
+  const removeAttachment = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      attachments: (prev.attachments || []).filter((_, i) => i !== index)
+    }));
+  };
+
+  const [activeSection, setActiveSection] = useState<number>(1);
+
+  const toggleSection = (section: number) => {
+    setActiveSection(prev => prev === section ? section : section);
+  };
+
+  const nextSection = (current: number) => {
+    setActiveSection(current + 1);
+  };
+
+
+
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
           <h1 className="text-2xl font-black text-brand-navy uppercase tracking-tight">
             {initialOrder ? 'Edit' : 'Create'} Service Order
           </h1>
           <p className="text-sm text-slate-500 font-medium">Capture complete service details</p>
         </div>
-        <div className="flex gap-3">
-          <button onClick={onCancel} className="px-6 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-xs font-black uppercase tracking-wider hover:bg-slate-200 transition-colors">Cancel</button>
+        <div className="flex flex-wrap gap-2 md:gap-3">
+          <button onClick={onCancel} className="flex-1 md:flex-none px-4 md:px-6 py-2.5 bg-slate-100 text-slate-600 rounded-xl text-[10px] md:text-xs font-black uppercase tracking-wider hover:bg-slate-200 transition-colors">Cancel</button>
           <button
             onClick={() => onSave({ ...formData, status: 'borrador' })}
-            className="px-6 py-2.5 bg-amber-100 text-amber-700 rounded-xl text-xs font-black uppercase tracking-wider hover:bg-amber-200 transition-all active:scale-95"
+            className="flex-1 md:flex-none px-4 md:px-6 py-2.5 bg-amber-100 text-amber-700 rounded-xl text-[10px] md:text-xs font-black uppercase tracking-wider hover:bg-amber-200 transition-all active:scale-95"
           >
-            Save as Draft
+            Draft
           </button>
           <button
             onClick={() => onSave({ ...formData, status: initialOrder ? formData.status : 'confirmada' })}
-            className="px-6 py-2.5 bg-primary text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-lg shadow-primary/30 active:scale-95 transition-all"
+            className={`flex-1 md:flex-none px-4 md:px-6 py-2.5 text-white rounded-xl text-[10px] md:text-xs font-black uppercase tracking-wider shadow-lg active:scale-95 transition-all ${activeSection >= 7 ? 'bg-primary shadow-primary/30 animate-pulse' : 'bg-slate-300 shadow-none cursor-not-allowed'
+              }`}
           >
-            {initialOrder ? 'Update Order' : 'Submit Order'}
+            {initialOrder ? 'Update' : 'Submit'}
           </button>
         </div>
       </div>
 
       <div className="grid grid-cols-12 gap-8">
-        <div className="col-span-12 xl:col-span-7 space-y-6">
+        <div className="col-span-12 xl:col-span-7 space-y-4">
 
           {/* TOP HEADER: GUIDE NUMBER & TRIP NUMBER */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex items-center justify-start gap-12">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col md:flex-row items-start md:items-center justify-start gap-6 md:gap-12 mb-6">
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase mb-1">No. Guía</label>
               <div className="text-2xl font-black text-brand-navy tracking-tight">{formData.general.guideNumber}</div>
             </div>
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase mb-1">No. de Viaje</label>
-              <input
-                className="text-2xl font-black text-brand-navy tracking-tight border-none p-0 focus:ring-0 w-32 placeholder:text-slate-200"
-                value={formData.general.tripNumber || ''}
-                onChange={(e) => handleChange('general', 'tripNumber', e.target.value)}
-                placeholder="---"
-              />
+              <div className="text-2xl font-black text-slate-300 tracking-tight">{formData.general.tripNumber}</div>
             </div>
           </div>
 
           {/* Section 1: CLIENTE */}
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary text-lg">person</span>
-              <h3 className="font-black text-brand-navy uppercase text-xs tracking-widest">1. Información del cliente</h3>
-            </div>
-            <div className="p-8 space-y-6">
-              {/* SUB-SECTION 1: Contact Info */}
-              <div className="grid grid-cols-2 gap-6">
-                <div className="col-span-2">
-                  <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Seleccionar Cliente</label>
-                  <div className="relative">
-                    <select
-                      className="w-full border-slate-200 rounded-xl text-sm font-semibold appearance-none focus:ring-primary focus:border-primary"
-                      value={formData.client}
-                      onChange={handleClientSelect}
-                    >
-                      <option value="">Seleccionar Cliente...</option>
-                      {clients.map(c => (
-                        <option key={c.id} value={c.client}>{c.client}</option>
-                      ))}
-                    </select>
-                    <span className="material-symbols-outlined absolute right-3 top-2.5 text-slate-400 pointer-events-none">expand_more</span>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Nombre Contacto</label>
-                  <input
-                    className="w-full border-slate-200 rounded-xl text-xs bg-slate-50 text-slate-700"
-                    value={formData.general.clientContact || ''}
-                    onChange={(e) => handleChange('general', 'clientContact', e.target.value)}
-                    placeholder="Nombre Contacto"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Teléfono</label>
-                  <input
-                    className="w-full border-slate-200 rounded-xl text-xs bg-slate-50 text-slate-700"
-                    value={formData.general.clientPhone || ''}
-                    onChange={(e) => handleChange('general', 'clientPhone', e.target.value)}
-                    placeholder="Teléfono"
-                  />
-                </div>
-                <div className="col-span-2">
-                  <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Dirección</label>
-                  <input
-                    className="w-full border-slate-200 rounded-xl text-xs bg-slate-50 text-slate-700"
-                    value={formData.general.clientAddress || ''}
-                    onChange={(e) => handleChange('general', 'clientAddress', e.target.value)}
-                    placeholder="Dirección"
-                  />
+          <FormSection step={1} title="Información del cliente" icon="person" colorClass="text-primary" activeSection={activeSection} onToggle={toggleSection} onNext={nextSection}>
+            {/* SUB-SECTION 1: Contact Info */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="col-span-1 md:col-span-2">
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Seleccionar Cliente</label>
+                <div className="relative">
+                  <select
+                    className="w-full border-slate-200 rounded-xl text-sm font-semibold appearance-none bg-none focus:ring-primary focus:border-primary"
+                    value={formData.client}
+                    onChange={handleClientSelect}
+                  >
+                    <option value="">Seleccionar Cliente...</option>
+                    {clients.map(c => (
+                      <option key={c.id} value={c.client}>{c.client}</option>
+                    ))}
+                  </select>
+                  <span className="material-symbols-outlined absolute right-3 top-2.5 text-slate-400 pointer-events-none">expand_more</span>
                 </div>
               </div>
+
+              <div className="col-span-1">
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Nombre Contacto</label>
+                <input
+                  className="w-full border-slate-200 rounded-xl text-xs bg-slate-50 text-slate-700"
+                  value={formData.general.clientContact || ''}
+                  onChange={(e) => handleChange('general', 'clientContact', e.target.value)}
+                  placeholder="Nombre Contacto"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Teléfono</label>
+                <input
+                  className="w-full border-slate-200 rounded-xl text-xs bg-slate-50 text-slate-700"
+                  value={formData.general.clientPhone || ''}
+                  onChange={(e) => handleChange('general', 'clientPhone', e.target.value)}
+                  placeholder="Teléfono"
+                />
+              </div>
+              <div className="col-span-2">
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Dirección</label>
+                <input
+                  className="w-full border-slate-200 rounded-xl text-xs bg-slate-50 text-slate-700"
+                  value={formData.general.clientAddress || ''}
+                  onChange={(e) => handleChange('general', 'clientAddress', e.target.value)}
+                  placeholder="Dirección"
+                />
+              </div>
             </div>
-          </div>
+          </FormSection>
 
           {/* Section 2: PROVEEDOR */}
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
-              <span className="material-symbols-outlined text-emerald-600 text-lg">local_shipping</span>
-              <h3 className="font-black text-brand-navy uppercase text-xs tracking-widest">2. Información del proveedor</h3>
-            </div>
-            <div className="p-8 space-y-6">
-              <div className="grid grid-cols-2 gap-6">
-                <div className="col-span-2">
-                  <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Seleccionar Proveedor</label>
-                  <div className="relative">
-                    <select
-                      className="w-full border-slate-200 rounded-xl text-sm font-semibold appearance-none focus:ring-emerald-500 focus:border-emerald-500"
-                      value={formData.provider || ''}
-                      onChange={handleProviderSelect}
-                    >
-                      <option value="">Seleccionar Proveedor...</option>
-                      {providers.map(p => (
-                        <option key={p.id} value={p.provider}>{p.provider}</option>
-                      ))}
-                    </select>
-                    <span className="material-symbols-outlined absolute right-3 top-2.5 text-slate-400 pointer-events-none">expand_more</span>
-                  </div>
-                </div>
-
-                {/* Autofilled Provider Details (Editable) */}
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Nombre Contacto</label>
-                  <input
-                    className="w-full border-slate-200 rounded-xl text-xs bg-slate-50 text-slate-700"
-                    value={formData.general.providerContact || ''}
-                    onChange={(e) => handleChange('general', 'providerContact', e.target.value)}
-                    placeholder="Nombre Contacto"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Teléfono</label>
-                  <input
-                    className="w-full border-slate-200 rounded-xl text-xs bg-slate-50 text-slate-700"
-                    value={formData.general.providerPhone || ''}
-                    onChange={(e) => handleChange('general', 'providerPhone', e.target.value)}
-                    placeholder="Teléfono"
-                  />
-                </div>
-                <div className="col-span-2">
-                  <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Dirección</label>
-                  <input
-                    className="w-full border-slate-200 rounded-xl text-xs bg-slate-50 text-slate-700"
-                    value={formData.general.providerAddress || ''}
-                    onChange={(e) => handleChange('general', 'providerAddress', e.target.value)}
-                    placeholder="Dirección"
-                  />
+          <FormSection step={2} title="Información del proveedor" icon="local_shipping" colorClass="text-emerald-600" activeSection={activeSection} onToggle={toggleSection} onNext={nextSection}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="col-span-1 md:col-span-2">
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Seleccionar Proveedor</label>
+                <div className="relative">
+                  <select
+                    className="w-full border-slate-200 rounded-xl text-sm font-semibold appearance-none bg-none focus:ring-emerald-500 focus:border-emerald-500"
+                    value={formData.provider || ''}
+                    onChange={handleProviderSelect}
+                  >
+                    <option value="">Seleccionar Proveedor...</option>
+                    {providers.map(p => (
+                      <option key={p.id} value={p.provider}>{p.provider}</option>
+                    ))}
+                  </select>
+                  <span className="material-symbols-outlined absolute right-3 top-2.5 text-slate-400 pointer-events-none">expand_more</span>
                 </div>
               </div>
+
+              {/* Autofilled Provider Details (Editable) */}
+              <div className="col-span-1">
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Nombre Contacto</label>
+                <input
+                  className="w-full border-slate-200 rounded-xl text-xs bg-slate-50 text-slate-700"
+                  value={formData.general.providerContact || ''}
+                  onChange={(e) => handleChange('general', 'providerContact', e.target.value)}
+                  placeholder="Nombre Contacto"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Teléfono</label>
+                <input
+                  className="w-full border-slate-200 rounded-xl text-xs bg-slate-50 text-slate-700"
+                  value={formData.general.providerPhone || ''}
+                  onChange={(e) => handleChange('general', 'providerPhone', e.target.value)}
+                  placeholder="Teléfono"
+                />
+              </div>
+              <div className="col-span-2">
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Dirección</label>
+                <input
+                  className="w-full border-slate-200 rounded-xl text-xs bg-slate-50 text-slate-700"
+                  value={formData.general.providerAddress || ''}
+                  onChange={(e) => handleChange('general', 'providerAddress', e.target.value)}
+                  placeholder="Dirección"
+                />
+              </div>
             </div>
-          </div>
+          </FormSection>
 
           {/* Section 3: ORDEN DE TRASLADO */}
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
-              <span className="material-symbols-outlined text-blue-500 text-lg">route</span>
-              <h3 className="font-black text-brand-navy uppercase text-xs tracking-widest">3. Información Orden de traslado</h3>
-            </div>
-            <div className="p-8 space-y-6">
-              <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">ORIGEN</label>
-                  <input
-                    className="w-full border-slate-200 rounded-xl text-sm font-semibold"
-                    value={formData.general.origin}
-                    onChange={(e) => handleChange('general', 'origin', e.target.value)}
-                    placeholder="Ciudad origen..."
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Destino (Ciudad)</label>
-                  <input
-                    className="w-full border-slate-200 rounded-xl text-sm font-semibold"
-                    value={formData.general.destination}
-                    onChange={(e) => handleChange('general', 'destination', e.target.value)}
-                    placeholder="Ciudad destino..."
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Recolección</label>
+          <FormSection step={3} title="Información Orden de traslado" icon="route" colorClass="text-blue-500" activeSection={activeSection} onToggle={toggleSection} onNext={nextSection}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">ORIGEN</label>
+                <input
+                  className="w-full border-slate-200 rounded-xl text-sm font-semibold"
+                  value={formData.general.origin}
+                  onChange={(e) => handleChange('general', 'origin', e.target.value)}
+                  placeholder="Ciudad origen..."
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Destino (Ciudad)</label>
+                <input
+                  className="w-full border-slate-200 rounded-xl text-sm font-semibold"
+                  value={formData.general.destination}
+                  onChange={(e) => handleChange('general', 'destination', e.target.value)}
+                  placeholder="Ciudad destino..."
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Recolección</label>
+                <div className="relative">
                   <select
-                    className="w-full border-slate-200 rounded-xl text-sm font-semibold"
+                    className="w-full border-slate-200 rounded-xl text-sm font-semibold appearance-none bg-none"
                     value={formData.general.pickup || ''}
                     onChange={(e) => handleChange('general', 'pickup', e.target.value)}
                   >
@@ -506,11 +747,14 @@ const CreateServiceOrder: React.FC<{
                     <option value="SI">SI</option>
                     <option value="NO">NO</option>
                   </select>
+                  <span className="material-symbols-outlined absolute right-3 top-2.5 text-slate-400 pointer-events-none">expand_more</span>
                 </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Forma de entrega</label>
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Forma de entrega</label>
+                <div className="relative">
                   <select
-                    className="w-full border-slate-200 rounded-xl text-sm font-semibold"
+                    className="w-full border-slate-200 rounded-xl text-sm font-semibold appearance-none bg-none"
                     value={formData.general.deliveryMethod}
                     onChange={(e) => handleChange('general', 'deliveryMethod', e.target.value)}
                   >
@@ -518,20 +762,23 @@ const CreateServiceOrder: React.FC<{
                     <option value="OCURRE">OCURRE</option>
                     <option value="DOMICILIO">DOMICILIO</option>
                   </select>
+                  <span className="material-symbols-outlined absolute right-3 top-2.5 text-slate-400 pointer-events-none">expand_more</span>
                 </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Fecha recepción</label>
-                  <input
-                    type="date"
-                    className="w-full border-slate-200 rounded-xl text-sm font-semibold"
-                    value={formData.general.receptionDate}
-                    onChange={(e) => handleChange('general', 'receptionDate', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">SISTEMA DE CONSERVACION RECEPCION:</label>
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Fecha recepción</label>
+                <input
+                  type="date"
+                  className="w-full border-slate-200 rounded-xl text-sm font-semibold"
+                  value={formData.general.receptionDate}
+                  onChange={(e) => handleChange('general', 'receptionDate', e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">SISTEMA DE CONSERVACION RECEPCION:</label>
+                <div className="relative">
                   <select
-                    className="w-full border-slate-200 rounded-xl text-sm font-semibold"
+                    className="w-full border-slate-200 rounded-xl text-sm font-semibold appearance-none bg-none"
                     value={formData.general.conservationSystem || ''}
                     onChange={(e) => handleChange('general', 'conservationSystem', e.target.value)}
                   >
@@ -539,11 +786,14 @@ const CreateServiceOrder: React.FC<{
                     <option value="SI">SI</option>
                     <option value="NO">NO</option>
                   </select>
+                  <span className="material-symbols-outlined absolute right-3 top-2.5 text-slate-400 pointer-events-none">expand_more</span>
                 </div>
-                <div className="col-span-2">
-                  <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">UNIDAD DE ENVÍO CUENTA CON REFRIERACION:</label>
+              </div>
+              <div className="col-span-2">
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">UNIDAD DE ENVÍO CUENTA CON REFRIERACION:</label>
+                <div className="relative">
                   <select
-                    className="w-full border-slate-200 rounded-xl text-sm font-semibold"
+                    className="w-full border-slate-200 rounded-xl text-sm font-semibold appearance-none bg-none"
                     value={formData.general.shippingUnitRefrigeration || ''}
                     onChange={(e) => handleChange('general', 'shippingUnitRefrigeration', e.target.value)}
                   >
@@ -551,68 +801,61 @@ const CreateServiceOrder: React.FC<{
                     <option value="SI">SI</option>
                     <option value="NO">NO</option>
                   </select>
-                </div>
-                <div className="col-span-2">
-                  <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">DIRECCIÓN FINAL DE ENTREGA</label>
-                  <input
-                    className="w-full border-slate-200 rounded-xl text-sm font-semibold"
-                    value={formData.general.delivery}
-                    onChange={(e) => handleChange('general', 'delivery', e.target.value)}
-                    placeholder="Dirección de entrega..."
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Fecha aprox salida origen</label>
-                  <input
-                    type="date"
-                    className="w-full border-slate-200 rounded-xl text-sm font-semibold"
-                    value={formData.general.estDeparture || ''}
-                    onChange={(e) => handleChange('general', 'estDeparture', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">fecha aprox llega destino</label>
-                  <input
-                    type="date"
-                    className="w-full border-slate-200 rounded-xl text-sm font-semibold"
-                    value={formData.general.estArrival || ''}
-                    onChange={(e) => handleChange('general', 'estArrival', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Temperatura de Recepción</label>
-                  <input
-                    className="w-full border-slate-200 rounded-xl text-sm font-semibold"
-                    value={formData.general.receptionTemp || ''}
-                    onChange={(e) => handleChange('general', 'receptionTemp', e.target.value)}
-                    placeholder="Eje: -18°C"
-                  />
-                </div>
-                <div className="col-span-2">
-                  <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Observaciones</label>
-                  <textarea
-                    rows={3}
-                    className="w-full border-slate-200 rounded-xl text-sm font-semibold"
-                    value={formData.general.observations || ''}
-                    onChange={(e) => handleChange('general', 'observations', e.target.value)}
-                    placeholder="Notas adicionales..."
-                  />
+                  <span className="material-symbols-outlined absolute right-3 top-2.5 text-slate-400 pointer-events-none">expand_more</span>
                 </div>
               </div>
+              <div className="col-span-2">
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">DIRECCIÓN FINAL DE ENTREGA</label>
+                <input
+                  className="w-full border-slate-200 rounded-xl text-sm font-semibold"
+                  value={formData.general.delivery}
+                  onChange={(e) => handleChange('general', 'delivery', e.target.value)}
+                  placeholder="Dirección de entrega..."
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Fecha aprox salida origen</label>
+                <input
+                  type="date"
+                  className="w-full border-slate-200 rounded-xl text-sm font-semibold"
+                  value={formData.general.estDeparture || ''}
+                  onChange={(e) => handleChange('general', 'estDeparture', e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">fecha aprox llega destino</label>
+                <input
+                  type="date"
+                  className="w-full border-slate-200 rounded-xl text-sm font-semibold"
+                  value={formData.general.estArrival || ''}
+                  onChange={(e) => handleChange('general', 'estArrival', e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Temperatura de Recepción</label>
+                <input
+                  className="w-full border-slate-200 rounded-xl text-sm font-semibold"
+                  value={formData.general.receptionTemp || ''}
+                  onChange={(e) => handleChange('general', 'receptionTemp', e.target.value)}
+                  placeholder="Eje: -18°C"
+                />
+              </div>
+              <div className="col-span-1 md:col-span-2">
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Observaciones</label>
+                <textarea
+                  rows={3}
+                  className="w-full border-slate-200 rounded-xl text-sm font-semibold"
+                  value={formData.general.observations || ''}
+                  onChange={(e) => handleChange('general', 'observations', e.target.value)}
+                  placeholder="Notas adicionales..."
+                />
+              </div>
             </div>
-          </div>
+          </FormSection>
 
           {/* Section 4: MERCANCIA */}
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-amber-500 text-lg">inventory_2</span>
-                <h3 className="font-black text-brand-navy uppercase text-xs tracking-widest">4. Mercancía</h3>
-              </div>
-              <span className="text-[10px] font-bold text-slate-400 uppercase">{formData.products.length} Productos</span>
-            </div>
-
-            <div className="p-8 space-y-8">
+          <FormSection step={4} title="Mercancía" icon="inventory_2" colorClass="text-amber-500" activeSection={activeSection} onToggle={toggleSection} onNext={nextSection}>
+            <div className="space-y-8">
               {/* PRODUCTS LIST */}
               <div>
                 <div className="flex justify-between items-center mb-4">
@@ -654,7 +897,7 @@ const CreateServiceOrder: React.FC<{
 
                           {/* Editable Temperature */}
                           <select
-                            className={`px-2 py-0.5 rounded text-[9px] font-black uppercase appearance-none border-none focus:ring-0 cursor-pointer ${product.temperature === 'CONGELADO' ? 'bg-cyan-100 text-cyan-700' :
+                            className={`px-2 py-0.5 rounded text-[9px] font-black uppercase appearance-none bg-none border-none focus:ring-0 cursor-pointer ${product.temperature === 'CONGELADO' ? 'bg-cyan-100 text-cyan-700' :
                               product.temperature === 'REFRIGERADO' ? 'bg-emerald-100 text-emerald-700' :
                                 'bg-amber-100 text-amber-700'
                               }`}
@@ -675,7 +918,7 @@ const CreateServiceOrder: React.FC<{
                           <label className="text-[9px] font-bold text-slate-400">Otros</label>
                         </div>
 
-                        <div className="grid grid-cols-5 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                           <div>
                             <input
                               type="number"
@@ -728,7 +971,7 @@ const CreateServiceOrder: React.FC<{
 
               <div className="border-t border-slate-100"></div>
 
-              <div className="grid grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-4">
                   <h4 className="text-[10px] font-black text-slate-400 uppercase mb-2">Logística</h4>
                   <div className="space-y-3">
@@ -754,20 +997,16 @@ const CreateServiceOrder: React.FC<{
                 </div>
               </div>
             </div>
-          </div>
+          </FormSection>
 
           {/* Section 5: FACTURACION */}
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
-              <span className="material-symbols-outlined text-emerald-500 text-lg">payments</span>
-              <h3 className="font-black text-brand-navy uppercase text-xs tracking-widest">5. Facturación</h3>
-            </div>
-            <div className="p-8 space-y-6">
-              <div className="grid grid-cols-3 gap-6">
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Seguro</label>
+          <FormSection step={5} title="Facturación" icon="payments" colorClass="text-emerald-500" activeSection={activeSection} onToggle={toggleSection} onNext={nextSection}>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Seguro</label>
+                <div className="relative">
                   <select
-                    className="w-full border-slate-200 rounded-xl text-sm font-semibold"
+                    className="w-full border-slate-200 rounded-xl text-sm font-semibold appearance-none bg-none"
                     value={formData.documentation.insurance}
                     onChange={(e) => handleChange('documentation', 'insurance', e.target.value)}
                   >
@@ -775,30 +1014,33 @@ const CreateServiceOrder: React.FC<{
                     <option value="SI">SI</option>
                     <option value="NO">NO</option>
                   </select>
+                  <span className="material-symbols-outlined absolute right-3 top-2.5 text-slate-400 pointer-events-none">expand_more</span>
                 </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Factura cliente</label>
-                  <input
-                    className="w-full border-slate-200 rounded-xl text-sm font-semibold"
-                    value={formData.documentation.clientInvoice}
-                    onChange={(e) => handleChange('documentation', 'clientInvoice', e.target.value)}
-                    placeholder="No. Factura..."
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Valor Factura</label>
-                  <input
-                    type="number"
-                    className="w-full border-slate-200 rounded-xl text-sm font-semibold"
-                    value={formData.documentation.invoiceValue}
-                    onChange={(e) => handleChange('documentation', 'invoiceValue', parseFloat(e.target.value))}
-                    placeholder="0.00"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Forma de pago</label>
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Factura cliente</label>
+                <input
+                  className="w-full border-slate-200 rounded-xl text-sm font-semibold"
+                  value={formData.documentation.clientInvoice}
+                  onChange={(e) => handleChange('documentation', 'clientInvoice', e.target.value)}
+                  placeholder="No. Factura..."
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Valor Factura</label>
+                <input
+                  type="number"
+                  className="w-full border-slate-200 rounded-xl text-sm font-semibold"
+                  value={formData.documentation.invoiceValue}
+                  onChange={(e) => handleChange('documentation', 'invoiceValue', parseFloat(e.target.value))}
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Forma de pago</label>
+                <div className="relative">
                   <select
-                    className="w-full border-slate-200 rounded-xl text-sm font-semibold"
+                    className="w-full border-slate-200 rounded-xl text-sm font-semibold appearance-none bg-none"
                     value={formData.documentation.paymentMethod}
                     onChange={(e) => handleChange('documentation', 'paymentMethod', e.target.value)}
                   >
@@ -806,11 +1048,14 @@ const CreateServiceOrder: React.FC<{
                     <option value="EFECTIVO">EFECTIVO</option>
                     <option value="TRANSFERENCIA">TRANSFERENCIA</option>
                   </select>
+                  <span className="material-symbols-outlined absolute right-3 top-2.5 text-slate-400 pointer-events-none">expand_more</span>
                 </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Forma de envío</label>
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Forma de envío</label>
+                <div className="relative">
                   <select
-                    className="w-full border-slate-200 rounded-xl text-sm font-semibold"
+                    className="w-full border-slate-200 rounded-xl text-sm font-semibold appearance-none bg-none"
                     value={formData.documentation.shippingMethod}
                     onChange={(e) => handleChange('documentation', 'shippingMethod', e.target.value)}
                   >
@@ -818,25 +1063,128 @@ const CreateServiceOrder: React.FC<{
                     <option value="POR COBRAR">POR COBRAR</option>
                     <option value="PAGADO">PAGADO</option>
                   </select>
+                  <span className="material-symbols-outlined absolute right-3 top-2.5 text-slate-400 pointer-events-none">expand_more</span>
                 </div>
-                <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Requiere Factura</label>
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Requiere Factura</label>
+                <div className="relative">
                   <select
-                    className="w-full border-slate-200 rounded-xl text-sm font-semibold"
+                    className="w-full border-slate-200 rounded-xl text-sm font-semibold appearance-none bg-none"
                     value={formData.documentation.requiresInvoice ? 'SI' : 'NO'}
                     onChange={(e) => handleChange('documentation', 'requiresInvoice', e.target.value === 'SI')}
                   >
                     <option value="NO">NO</option>
                     <option value="SI">SI</option>
                   </select>
+                  <span className="material-symbols-outlined absolute right-3 top-2.5 text-slate-400 pointer-events-none">expand_more</span>
                 </div>
               </div>
             </div>
-          </div>
+          </FormSection>
+
+          {/* Section 6: ASIGNACIÓN DE UNIDAD Y OPERADOR */}
+          <FormSection step={6} title="Asignación de Unidad y Operador" icon="local_shipping" colorClass="text-slate-500" activeSection={activeSection} onToggle={toggleSection} onNext={nextSection}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="col-span-1 md:col-span-2">
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Seleccionar Unidad</label>
+                <div className="relative">
+                  <select
+                    className="w-full border-slate-200 rounded-xl text-sm font-semibold appearance-none bg-none focus:ring-slate-500 focus:border-slate-500"
+                    value={formData.assignedUnit?.id || ''}
+                    onChange={(e) => {
+                      const unitId = e.target.value;
+                      const selectedUnit = units.find(u => u.id === unitId);
+                      handleTopLevelChange('assignedUnit', selectedUnit);
+                      handleTopLevelChange('unitId', unitId);
+                    }}
+                  >
+                    <option value="">Seleccionar Unidad...</option>
+                    {units.map(u => (
+                      <option key={u.id} value={u.id}>{u.id} - {u.plates}</option>
+                    ))}
+                  </select>
+                  <span className="material-symbols-outlined absolute right-3 top-2.5 text-slate-400 pointer-events-none">expand_more</span>
+                </div>
+              </div>
+              <div className="col-span-2">
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-2">Seleccionar Operador</label>
+                <div className="relative">
+                  <select
+                    className="w-full border-slate-200 rounded-xl text-sm font-semibold appearance-none bg-none focus:ring-slate-500 focus:border-slate-500"
+                    value={formData.assignedDriver?.id || ''}
+                    onChange={(e) => {
+                      const driverId = e.target.value;
+                      const selectedDriver = drivers.find(d => d.id === driverId);
+                      handleTopLevelChange('assignedDriver', selectedDriver);
+                      handleTopLevelChange('driverId', driverId);
+                    }}
+                  >
+                    <option value="">Seleccionar Operador...</option>
+                    {drivers.map(d => (
+                      <option key={d.id} value={d.id}>{d.name}</option>
+                    ))}
+                  </select>
+                  <span className="material-symbols-outlined absolute right-3 top-2.5 text-slate-400 pointer-events-none">expand_more</span>
+                </div>
+              </div>
+            </div>
+          </FormSection>
+
+          {/* Section 7: EVIDENCIA FOTOGRÁFICA (NEW) */}
+          <FormSection step={7} title="Evidencia Fotográfica" icon="photo_camera" colorClass="text-pink-500" isLast={true} activeSection={activeSection} onToggle={toggleSection} onNext={nextSection}>
+            <div className="space-y-6">
+              <div className="border-2 border-dashed border-slate-200 rounded-xl p-8 hover:bg-slate-50 transition-colors text-center cursor-pointer relative group">
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  capture="environment" // Hints for camera on mobile
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  onChange={handleFileChange}
+                />
+                <div className="pointer-events-none">
+                  <span className="material-symbols-outlined text-4xl text-slate-300 mb-2 group-hover:text-primary transition-colors">add_a_photo</span>
+                  <p className="text-sm font-bold text-slate-600">Toque para tomar foto o cargar de galería</p>
+                  <p className="text-[10px] text-slate-400 mt-1">Soporta múltiples imágenes (JPG, PNG)</p>
+                </div>
+              </div>
+
+              {/* Image Previews */}
+              {formData.attachments && formData.attachments.length > 0 && (
+                <div className="grid grid-cols-3 md:grid-cols-4 gap-4">
+                  {formData.attachments.map((src, index) => (
+                    <div key={index} className="relative aspect-square rounded-xl overflow-hidden shadow-sm group">
+                      <img src={src} alt={`Adjunto ${index + 1}`} className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => removeAttachment(index)}
+                        className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 hover:bg-red-500 transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-sm">close</span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </FormSection>
         </div>
 
-        <div className="col-span-12 xl:col-span-5">
-          <DocumentPreview order={formData} />
+        <div className="col-span-12 xl:col-span-5 flex flex-col gap-4">
+          <div className="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200">
+            <h3 className="font-black text-brand-navy uppercase text-xs tracking-widest">Vista Previa</h3>
+            <button
+              type="button"
+              onClick={() => downloadAsPDF('document-preview-content', `Draft_${formData.general.guideNumber}.pdf`)}
+              className="px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-slate-800 transition-colors flex items-center gap-2"
+            >
+              <span className="material-symbols-outlined text-sm">download</span> Descargar Borrador
+            </button>
+          </div>
+          <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 overflow-auto max-h-[1200px]">
+            <DocumentPreview order={formData} />
+          </div>
         </div>
       </div >
     </div >
@@ -967,32 +1315,37 @@ const OrderDetailsModal: React.FC<{ order: ServiceOrder; onClose: () => void; on
                   </table>
                 </div>
               </div>
+
+              {/* Evidence photos in modal */}
+              {order.attachments && order.attachments.length > 0 && (
+                <div className="mt-8">
+                  <h3 className="font-black text-brand-navy uppercase text-xs tracking-widest mb-4 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-sm text-pink-500">photo_camera</span> Evidencia Fotográfica
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {order.attachments.map((src, index) => (
+                      <div key={index} className="aspect-square rounded-xl border border-slate-100 overflow-hidden shadow-sm">
+                        <img src={src} alt={`Evidencia ${index + 1}`} className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Right Preview */}
-            <div className="col-span-12 lg:col-span-4 bg-slate-50 p-6 border-l border-slate-100 flex flex-col">
-              <div className="flex justify-between items-center mb-4">
+            <div className="col-span-12 lg:col-span-4 bg-slate-100 p-6 border-l border-slate-200 flex flex-col overflow-auto">
+              <div className="flex justify-between items-center mb-6">
                 <h3 className="font-black text-brand-navy uppercase text-xs tracking-widest">Document Preview</h3>
                 <button
-                  onClick={() => {
-                    const input = document.getElementById('document-preview-content');
-                    if (input) {
-                      html2canvas(input, { scale: 2 }).then((canvas) => {
-                        const imgData = canvas.toDataURL('image/png');
-                        const pdf = new jsPDF('p', 'mm', 'a4');
-                        const pdfWidth = pdf.internal.pageSize.getWidth();
-                        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-                        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-                        pdf.save(`CartaPorte_${order.general.guideNumber}.pdf`);
-                      });
-                    }
-                  }}
-                  className="px-3 py-1.5 bg-white border border-slate-200 rounded text-[10px] font-black uppercase tracking-wider hover:bg-slate-50 shadow-sm transition-all active:scale-95"
+                  onClick={() => downloadAsPDF('modal-document-preview', `CartaPorte_${order.general.guideNumber}.pdf`)}
+                  className="px-4 py-2 bg-primary text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-blue-600 shadow-lg shadow-primary/20 transition-all active:scale-95 flex items-center gap-2"
                 >
-                  Download PDF
+                  <span className="material-symbols-outlined text-sm">print</span>
+                  Imprimir PDF
                 </button>
               </div>
-              <DocumentPreview order={order} />
+              <DocumentPreview order={order} id="modal-document-preview" />
             </div>
           </div>
         </div>
@@ -1007,21 +1360,113 @@ const OrderDetailsModal: React.FC<{ order: ServiceOrder; onClose: () => void; on
 };
 
 const ServiceOrders: React.FC = () => {
-  const [orders, setOrders] = useState<ServiceOrder[]>(MOCK_ORDERS);
+  const { orders, isLoading, error, addOrder, updateOrder } = useData();
   const [view, setView] = useState<'list' | 'create' | 'edit'>('list');
+
+  // Column Visibility State
+  const [visibleColumns, setVisibleColumns] = useState({
+    guideNumber: true,
+    tripNumber: true,
+    client: true,
+    origin: true,
+    destination: true,
+    products: true,
+    unit: true,
+    receptionDate: true,
+    receptionTemp: true,
+    estDeparture: false,
+    estArrival: false,
+    insurance: false,
+    clientInvoice: false,
+    invoiceValue: false,
+    paymentMethod: false,
+    shippingMethod: false,
+    requiresInvoice: false,
+    observations: false,
+    status: true,
+    actions: true
+  });
+
+  const columnLabels: Record<string, string> = {
+    guideNumber: 'No. Guía',
+    tripNumber: 'No. Viaje',
+    client: 'Cliente',
+    origin: 'Origen',
+    destination: 'Destino',
+    products: 'Productos',
+    unit: 'Unidad',
+    receptionDate: 'Fecha Rec.',
+    receptionTemp: 'Temp. Rec.',
+    estDeparture: 'Salida Est.',
+    estArrival: 'Llegada Est.',
+    insurance: 'Seguro',
+    clientInvoice: 'Factura',
+    invoiceValue: 'Valor',
+    paymentMethod: 'Forma Pago',
+    shippingMethod: 'Forma Envío',
+    requiresInvoice: 'Req. Factura',
+    observations: 'Observaciones',
+    status: 'Estado'
+  };
+
+  const [showColumnMenu, setShowColumnMenu] = useState(false);
+
+  const toggleColumn = (key: keyof typeof visibleColumns) => {
+    setVisibleColumns(prev => ({ ...prev, [key]: !prev[key] }));
+  };
   const [selectedOrder, setSelectedOrder] = useState<ServiceOrder | null>(null);
   const [editingOrder, setEditingOrder] = useState<ServiceOrder | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [activeSegment, setActiveSegment] = useState<'all' | 'confirmada' | 'transito' | 'bodega' | 'cerrada'>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+
   const navigate = useNavigate();
 
-  const handleSave = (orderData: ServiceOrder) => {
-    if (view === 'edit') {
-      setOrders(prev => prev.map(o => o.id === orderData.id ? orderData : o));
-    } else {
-      setOrders(prev => [orderData, ...prev]);
+  const handleSave = async (orderData: ServiceOrder) => {
+    try {
+      if (editingOrder) {
+        await updateOrder(editingOrder.id, orderData);
+      } else {
+        await addOrder(orderData);
+      }
+      setEditingOrder(null);
+      setView('list');
+    } catch (err) {
+      console.error('Error saving order:', err);
     }
-    setView('list');
-    setEditingOrder(null);
   };
+
+  const filteredOrders = orders.filter(order => {
+    const matchesSearch = order.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.general.guideNumber.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSegment = activeSegment === 'all' || order.status === activeSegment;
+    return matchesSearch && matchesSegment;
+  });
+
+  const stats = {
+    total: orders.length,
+    active: orders.filter(o => o.status === 'transito' || o.status === 'confirmada').length,
+    completed: orders.filter(o => o.status === 'cerrada').length,
+    alerts: 0
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-slate-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-8 text-center bg-red-50 text-red-600 rounded-2xl border border-red-100 m-4">
+        <span className="material-symbols-outlined text-4xl mb-2">error</span>
+        <p className="font-bold">Error al cargar datos</p>
+        <p className="text-sm">{error}</p>
+      </div>
+    );
+  }
 
   if (view === 'create' || view === 'edit') {
     return (
@@ -1065,6 +1510,34 @@ const ServiceOrders: React.FC = () => {
               <button className="bg-white border border-slate-200 py-2.5 px-4 rounded-xl text-xs font-bold text-slate-600 shadow-sm outline-none hover:border-slate-300 hover:bg-slate-50 transition-all flex items-center gap-2">
                 Fecha <span className="material-symbols-outlined text-sm text-slate-400">calendar_today</span>
               </button>
+
+              {/* Column Visibility Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowColumnMenu(!showColumnMenu)}
+                  className="bg-white border border-slate-200 py-2.5 px-4 rounded-xl text-xs font-bold text-slate-600 shadow-sm outline-none hover:border-slate-300 hover:bg-slate-50 transition-all flex items-center gap-2"
+                >
+                  Columnas <span className="material-symbols-outlined text-sm text-slate-400">view_column</span>
+                </button>
+                {showColumnMenu && (
+                  <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-slate-100 p-2 z-20 max-h-[400px] overflow-y-auto">
+                    {Object.keys(columnLabels).map(key => {
+                      return (
+                        <label key={key} className="flex items-center gap-2 px-3 py-2 hover:bg-slate-50 rounded-lg cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={visibleColumns[key as keyof typeof visibleColumns]}
+                            onChange={() => toggleColumn(key as keyof typeof visibleColumns)}
+                            className="rounded border-slate-300 text-primary focus:ring-primary"
+                          />
+                          <span className="text-[11px] font-bold text-slate-600">{columnLabels[key]}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
               <button className="ml-auto bg-white py-2.5 px-5 rounded-xl text-xs font-bold text-slate-400 shadow-sm border border-slate-200">Limpiar</button>
             </div>
           </div>
@@ -1073,26 +1546,26 @@ const ServiceOrders: React.FC = () => {
             <table className="w-full text-left">
               <thead className="bg-slate-50/50">
                 <tr>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider sticky left-0 bg-slate-50 z-10 whitespace-nowrap">No. Guía</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">No. Viaje</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Cliente</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Origen</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Destino</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider text-center whitespace-nowrap">Productos</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Unidad</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Fecha Rec.</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Temp. Rec.</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider text-center whitespace-nowrap">Salida Estimada</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider text-center whitespace-nowrap">Llegada Estimada</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider text-center whitespace-nowrap">Seguro</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Factura</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider text-right whitespace-nowrap">Valor</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Forma Pago</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Forma Envío</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider text-center whitespace-nowrap">Req. Factura</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Observaciones</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Estado</th>
-                  <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Acciones</th>
+                  {visibleColumns.guideNumber && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider sticky left-0 bg-slate-50 z-10 whitespace-nowrap">No. Guía</th>}
+                  {visibleColumns.tripNumber && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">No. Viaje</th>}
+                  {visibleColumns.client && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Cliente</th>}
+                  {visibleColumns.origin && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Origen</th>}
+                  {visibleColumns.destination && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Destino</th>}
+                  {visibleColumns.products && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider text-center whitespace-nowrap">Productos</th>}
+                  {visibleColumns.unit && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Unidad</th>}
+                  {visibleColumns.receptionDate && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Fecha Rec.</th>}
+                  {visibleColumns.receptionTemp && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Temp. Rec.</th>}
+                  {visibleColumns.estDeparture && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider text-center whitespace-nowrap">Salida Estimada</th>}
+                  {visibleColumns.estArrival && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider text-center whitespace-nowrap">Llegada Estimada</th>}
+                  {visibleColumns.insurance && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider text-center whitespace-nowrap">Seguro</th>}
+                  {visibleColumns.clientInvoice && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Factura</th>}
+                  {visibleColumns.invoiceValue && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider text-right whitespace-nowrap">Valor</th>}
+                  {visibleColumns.paymentMethod && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Forma Pago</th>}
+                  {visibleColumns.shippingMethod && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Forma Envío</th>}
+                  {visibleColumns.requiresInvoice && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider text-center whitespace-nowrap">Req. Factura</th>}
+                  {visibleColumns.observations && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Observaciones</th>}
+                  {visibleColumns.status && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Estado</th>}
+                  {visibleColumns.actions && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Acciones</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -1101,46 +1574,54 @@ const ServiceOrders: React.FC = () => {
                     key={order.id}
                     className="hover:bg-slate-50/50 transition-colors cursor-pointer group whitespace-nowrap"
                   >
-                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-brand-navy sticky left-0 bg-white group-hover:bg-slate-50 z-10">{order.general.guideNumber}</td>
-                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-slate-500">{order.general.tripNumber || '-'}</td>
-                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-medium text-slate-600">{order.client}</td>
-                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-slate-600">{order.general.origin || order.general.reception}</td>
-                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-primary">{order.general.destination}</td>
-                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-center">
-                      <div className="flex flex-col gap-1 items-center">
-                        {order.products.map((p, i) => (
-                          <div key={i} className="flex items-center gap-1">
-                            <span className="text-[10px] font-medium text-slate-600">{p.name}</span>
-                            <TemperatureBadge temp={p.temperature} />
-                          </div>
-                        ))}
-                      </div>
-                    </td>
-                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-medium text-slate-600">{order.assignedUnit?.id || 'Pendiente'}</td>
-                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-medium text-slate-500">{order.general.receptionDate}</td>
-                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-blue-600">{order.general.receptionTemp || '-'}</td>
-                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-medium text-slate-500 text-center">{order.general.estDeparture || '-'}</td>
-                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-medium text-slate-500 text-center">{order.general.estArrival || '-'}</td>
-                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-center">
-                      <span className={order.documentation.insurance === 'SI' ? 'text-emerald-600' : 'text-slate-400'}>{order.documentation.insurance || 'NO'}</span>
-                    </td>
-                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-medium text-slate-600">{order.documentation.clientInvoice || '-'}</td>
-                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-black text-slate-900 text-right">${order.documentation.invoiceValue?.toLocaleString() || '0'}</td>
-                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-[10px] font-bold text-slate-600 uppercase italic">{order.documentation.paymentMethod || '-'}</td>
-                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-[10px] font-bold text-slate-600 uppercase italic">{order.documentation.shippingMethod || '-'}</td>
-                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-center">
-                      <span className={order.documentation.requiresInvoice ? 'text-emerald-600' : 'text-slate-400'}>{order.documentation.requiresInvoice ? 'SI' : 'NO'}</span>
-                    </td>
-                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-[10px] text-slate-500 whitespace-normal min-w-[200px]">{order.general.observations || '-'}</td>
-                    <td onClick={() => setSelectedOrder(order)} className="px-6 py-4"><StatusBadge status={order.status} /></td>
-                    <td className="px-6 py-4 text-slate-400 flex items-center gap-2">
-                      <button onClick={() => setSelectedOrder(order)} className="hover:text-primary transition-colors" title="Ver Detalles">
-                        <span className="material-symbols-outlined">visibility</span>
-                      </button>
-                      <button onClick={() => navigate(`/tracking?guide=${order.general.guideNumber}`)} className="hover:text-primary transition-colors" title="Rastrear en Mapa">
-                        <span className="material-symbols-outlined">location_on</span>
-                      </button>
-                    </td>
+                    {visibleColumns.guideNumber && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-brand-navy sticky left-0 bg-white group-hover:bg-slate-50 z-10">{order.general.guideNumber}</td>}
+                    {visibleColumns.tripNumber && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-slate-500">{order.general.tripNumber || '-'}</td>}
+                    {visibleColumns.client && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-medium text-slate-600">{order.client}</td>}
+                    {visibleColumns.origin && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-slate-600">{order.general.origin || order.general.reception}</td>}
+                    {visibleColumns.destination && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-primary">{order.general.destination}</td>}
+                    {visibleColumns.products && (
+                      <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-center">
+                        <div className="flex flex-col gap-1 items-center">
+                          {order.products.map((p, i) => (
+                            <div key={i} className="flex items-center gap-1">
+                              <span className="text-[10px] font-medium text-slate-600">{p.name}</span>
+                              <TemperatureBadge temp={p.temperature} />
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                    )}
+                    {visibleColumns.unit && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-medium text-slate-600">{order.assignedUnit?.id || 'Pendiente'}</td>}
+                    {visibleColumns.receptionDate && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-medium text-slate-500">{order.general.receptionDate}</td>}
+                    {visibleColumns.receptionTemp && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-blue-600">{order.general.receptionTemp || '-'}</td>}
+                    {visibleColumns.estDeparture && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-medium text-slate-500 text-center">{order.general.estDeparture || '-'}</td>}
+                    {visibleColumns.estArrival && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-medium text-slate-500 text-center">{order.general.estArrival || '-'}</td>}
+                    {visibleColumns.insurance && (
+                      <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-center">
+                        <span className={order.documentation.insurance === 'SI' ? 'text-emerald-600' : 'text-slate-400'}>{order.documentation.insurance || 'NO'}</span>
+                      </td>
+                    )}
+                    {visibleColumns.clientInvoice && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-medium text-slate-600">{order.documentation.clientInvoice || '-'}</td>}
+                    {visibleColumns.invoiceValue && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-black text-slate-900 text-right">${order.documentation.invoiceValue?.toLocaleString() || '0'}</td>}
+                    {visibleColumns.paymentMethod && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-[10px] font-bold text-slate-600 uppercase italic">{order.documentation.paymentMethod || '-'}</td>}
+                    {visibleColumns.shippingMethod && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-[10px] font-bold text-slate-600 uppercase italic">{order.documentation.shippingMethod || '-'}</td>}
+                    {visibleColumns.requiresInvoice && (
+                      <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-center">
+                        <span className={order.documentation.requiresInvoice ? 'text-emerald-600' : 'text-slate-400'}>{order.documentation.requiresInvoice ? 'SI' : 'NO'}</span>
+                      </td>
+                    )}
+                    {visibleColumns.observations && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-[10px] text-slate-500 whitespace-normal min-w-[200px]">{order.general.observations || '-'}</td>}
+                    {visibleColumns.status && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4"><StatusBadge status={order.status} /></td>}
+                    {visibleColumns.actions && (
+                      <td className="px-6 py-4 text-slate-400 flex items-center gap-2">
+                        <button onClick={() => setSelectedOrder(order)} className="hover:text-primary transition-colors" title="Ver Detalles">
+                          <span className="material-symbols-outlined">visibility</span>
+                        </button>
+                        <button onClick={() => navigate(`/tracking?guide=${order.general.guideNumber}`)} className="hover:text-primary transition-colors" title="Rastrear en Mapa">
+                          <span className="material-symbols-outlined">location_on</span>
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

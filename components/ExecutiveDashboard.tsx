@@ -1,22 +1,22 @@
-
 import React, { useEffect, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { generateLogisticsInsights } from '../lib/gemini';
-import { MOCK_ORDERS, FLEET_DATA } from '../data/mockData';
+import { useData } from '../context/DataContext';
 
 const ExecutiveDashboard: React.FC = () => {
+  const { orders, units } = useData();
   const [aiInsights, setAiInsights] = useState<{ title: string, desc: string }[]>([]);
   const [loadingAi, setLoadingAi] = useState(true);
 
-  // Dynamic Metrics
-  const activeShipments = MOCK_ORDERS.filter(o => o.status === 'transito' || o.status === 'confirmada').length;
-  const unitsInOperation = FLEET_DATA.filter(u => u.status === 'In Transit' || u.status === 'Loading').length;
-  const ordersInWarehouse = MOCK_ORDERS.filter(o => o.status === 'bodega').length;
+  // Dynamic Metrics - Using live data from DataContext
+  const activeShipments = orders.filter(o => o.status === 'transito' || o.status === 'confirmada').length;
+  const unitsInOperation = units.filter(u => u.status === 'In Transit' || u.status === 'Loading' || u.status === 'Operational').length;
+  const ordersInWarehouse = orders.filter(o => o.status === 'bodega').length;
 
   const chartData = [
-    { name: 'Confirmada', value: MOCK_ORDERS.filter(o => o.status === 'confirmada').length, color: '#10b981' },
-    { name: 'En Tránsito', value: MOCK_ORDERS.filter(o => o.status === 'transito').length, color: '#3b82f6' },
-    { name: 'En Bodega', value: MOCK_ORDERS.filter(o => o.status === 'bodega').length, color: '#f59e0b' },
+    { name: 'Confirmada', value: orders.filter(o => o.status === 'confirmada').length, color: '#10b981' },
+    { name: 'En Tránsito', value: orders.filter(o => o.status === 'transito').length, color: '#3b82f6' },
+    { name: 'En Bodega', value: orders.filter(o => o.status === 'bodega').length, color: '#f59e0b' },
   ];
 
   useEffect(() => {
@@ -114,7 +114,7 @@ const ExecutiveDashboard: React.FC = () => {
             <span className="material-symbols-outlined text-primary">analytics</span> Eventos Recientes
           </h4>
           <div className="relative pl-4 border-l-2 border-slate-100 space-y-8 max-h-[480px] overflow-y-auto pr-2 custom-scrollbar">
-            {MOCK_ORDERS.slice(0, 4).map((order, i) => (
+            {orders.slice(0, 4).map((order, i) => (
               <div key={i} className="relative">
                 <div className={`absolute -left-[25px] top-0 w-4 h-4 rounded-full border-2 border-white shadow-sm flex items-center justify-center ${order.status === 'transito' ? 'bg-blue-500' :
                   order.status === 'bodega' ? 'bg-amber-500' : 'bg-emerald-500'
