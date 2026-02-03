@@ -5,137 +5,353 @@ import { useData } from '../context/DataContext';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { useNavigate } from 'react-router-dom';
+import pdfLogo from '../assets/pdf_logo_v2.png';
+import pdfSlogan from '../assets/pdf_slogan_v2.png';
 
 // Reusable Document Preview (Updated for Nested Data)
 const DocumentPreview: React.FC<{ order: Partial<ServiceOrder>; id?: string }> = ({ order, id = "document-preview-content" }) => {
+  // Logic to group products by temperature
+  const grouped = (order.products || []).reduce((acc, prod) => {
+    const temp = (prod.temperature || 'SECO').toUpperCase();
+    if (!acc[temp]) {
+      acc[temp] = { volume: 0, pieces: 0, weight: 0, units: new Set<string>(), others: [] };
+    }
+    acc[temp].volume += Number(prod.volume) || 0;
+    acc[temp].pieces += Number(prod.pieces) || 0;
+    acc[temp].weight += Number(prod.weight) || 0;
+    if (prod.unitMeasure) acc[temp].units.add(prod.unitMeasure.toUpperCase());
+    if (prod.others) acc[temp].others.push(prod.others);
+    return acc;
+  }, {} as Record<string, { volume: number; pieces: number; weight: number; units: Set<string>; others: string[] }>);
+
+  const formatQuantity = (num: number | string | undefined | null) => {
+    if (num === undefined || num === null || num === '') return '-';
+    const val = typeof num === 'string' ? parseFloat(num) : num;
+    if (isNaN(val)) return num;
+    // Standard Western: Comma for thousands, Dot for decimals
+    return val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const formatCurrency = (num: number | string | undefined | null) => {
+    if (num === undefined || num === null || num === '') return '-';
+    const val = typeof num === 'string' ? parseFloat(num) : num;
+    if (isNaN(val)) return num;
+    // User wants "10,000" (no decimals if zero) but with commas for thousands
+    return val.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  };
+
+  const totalWeight = Object.keys(grouped).reduce((sum, key) => sum + grouped[key].weight, 0);
+  const isSinThermoChecked = order.general?.conservationSystem !== 'SI';
+
   return (
     <div
       id={id}
-      className="bg-white p-12 text-slate-900 shadow-2xl w-full mx-auto flex flex-col min-h-[297mm] h-auto overflow-visible print:shadow-none print:p-0"
+      className="bg-white p-8 text-black shadow-2xl w-full mx-auto flex flex-col min-h-[297mm] h-auto overflow-visible print:shadow-none print:p-0"
       style={{ maxWidth: '210mm' }}
     >
-      <div className="flex justify-between items-start mb-10 border-b-2 border-slate-900 pb-8">
-        <div>
-          <h4 className="font-black text-2xl uppercase leading-none tracking-tighter">MAYA<br /><span className="text-primary">EXPRESS</span></h4>
-          <p className="text-[9px] font-bold text-slate-400 uppercase mt-2">Logistics Enterprise Solutions</p>
+      {/* Brand Header */}
+      <div className="flex justify-between items-center mb-2">
+        <img src={pdfLogo} alt="Logo" className="h-20 object-contain" />
+        <img src={pdfSlogan} alt="Slogan" className="h-10 object-contain" />
+      </div>
+
+      {/* Guide Header Row */}
+      <div className="flex justify-between items-center mb-4 border-y-2 border-slate-900 h-10">
+        <p className="text-[#FF0000] font-black text-[10px] uppercase leading-tight">
+          CLIENTE FAVOR DE VERIFICAR QUE SUS DATOS SEAN CORRECTOS
+        </p>
+        <div className="flex items-center gap-6 h-full">
+          <span className="font-black text-base uppercase whitespace-nowrap text-black">NÚMERO DE GUÍA:</span>
+          <span className="font-black text-xl text-[#0070c0] min-w-[80px] text-right flex items-center justify-end h-full">
+            {order.general?.guideNumber || 'SO-PENDING'}
+          </span>
         </div>
-        <div className="text-right">
-          <p className="text-[10px] font-black text-slate-400 uppercase">Carta Porte 3.1</p>
-          <p className="font-mono text-xs font-black">{order.general?.guideNumber || 'SO-PENDING'}</p>
-          {order.general?.tripNumber && (
-            <p className="text-[9px] font-bold text-slate-500 mt-1 uppercase">Viaje: {order.general.tripNumber}</p>
-          )}
-          <div className="mt-2 w-16 h-16 ml-auto bg-slate-100 flex items-center justify-center rounded">
-            <span className="material-symbols-outlined text-4xl text-slate-300">qr_code_2</span>
+      </div>
+
+      {/* Info Section: ORDEN DE TRASLADO */}
+      <div className="grid grid-cols-2 gap-x-12 gap-y-0.5 text-[10px] mb-4 font-bold">
+        {/* Left Side */}
+        <div className="space-y-0.5">
+          <h2 className="text-base font-black uppercase mb-1 text-black">ORDEN DE TRASLADO</h2>
+          <div className="flex gap-2">
+            <span className="uppercase whitespace-nowrap text-black">FECHA:</span>
+            <span className="font-normal uppercase text-[#0070c0]">{order.general?.receptionDate || '-'}</span>
+          </div>
+          <div className="flex gap-2">
+            <span className="uppercase whitespace-nowrap text-black">OPERADOR:</span>
+            <span className="font-normal uppercase text-[#0070c0]">{order.assignedDriver?.name || '-'}</span>
+          </div>
+
+          <div className="pt-1">
+            <p className="text-[#FF0000] text-[8px] leading-tight font-black uppercase max-w-[280px]">
+              IMPORTANTE: MAYA EXPRESS NO SE HACE RESPONSABLE POR MERCANCIA O ENVIOS PASADOS LOS 15 DIAS DE ARRIBO
+            </p>
+          </div>
+        </div>
+
+        {/* Right Side */}
+        <div className="space-y-0.5 mt-[0.5px]">
+          <div className="flex items-center gap-3 mb-1">
+            <span className="uppercase whitespace-nowrap text-black">NO. ECONÓMICO DE UNIDAD:</span>
+            <span className="font-normal uppercase text-[#0070c0]">{/* Placeholder for future field */}</span>
+          </div>
+
+          <div className="flex gap-2">
+            <span className="uppercase whitespace-nowrap text-black">ORIGEN:</span>
+            <span className="font-normal uppercase text-[#0070c0]">{order.general?.origin || '-'}</span>
+          </div>
+          <div className="flex gap-2">
+            <span className="uppercase whitespace-nowrap text-black">DESTINO:</span>
+            <span className="font-normal uppercase text-[#0070c0]">{order.general?.destination || '-'}</span>
+          </div>
+          <div className="flex gap-2">
+            <span className="uppercase whitespace-nowrap text-black">FORMA DE ENTREGA:</span>
+            <span className="font-normal uppercase text-[#0070c0]">{order.general?.deliveryMethod || '-'}</span>
+          </div>
+          <div className="flex gap-2">
+            <span className="uppercase whitespace-nowrap font-black text-black">NO. VIAJE:</span>
+            <span className="font-black uppercase text-[#0070c0]">{order.general?.tripNumber || '-'}</span>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-8 text-[11px] mb-8">
-        <div className="space-y-1">
-          <p className="font-black text-slate-400 uppercase text-[9px]">Shipper / Remitente</p>
-          <p className="font-bold">{order.provider || 'Proveedor'}</p>
-          <p className="text-slate-500">{order.general?.providerAddress}</p>
-          {order.general?.reception && order.general.reception !== order.general.providerAddress && (
-            <p className="text-slate-500">{order.general.reception}</p>
-          )}
-        </div>
-        <div className="space-y-1">
-          <p className="font-black text-slate-400 uppercase text-[9px]">Consignee / Destinatario</p>
-          <p className="font-bold">{order.client || 'Cliente'}</p>
-          <p className="text-slate-500">{order.general?.clientAddress}</p>
-          {order.general?.delivery && order.general.delivery !== order.general.clientAddress && (
-            <p className="text-slate-500">{order.general.delivery}</p>
-          )}
+      {/* Billing Section */}
+      <div className="text-[10px] mb-2 font-bold text-slate-900 border-t border-slate-200 pt-2">
+        <div className="flex gap-2">
+          <span className="uppercase whitespace-nowrap text-black">CLIENTE AL QUE SE FACTURA O COBRA:</span>
+          <span className="font-normal uppercase text-[#0070c0]">{/* Manual Fill */}</span>
         </div>
       </div>
 
-      {/* Detailed Products Table matching Reference Image */}
-      <div className="mb-6 rounded-lg border border-slate-200 overflow-hidden">
-        <table className="w-full text-[9px]">
-          <thead className="bg-brand-navy text-white uppercase font-black text-[8px]">
-            <tr>
-              <th className="py-2 px-2 text-left w-[25%]">Producto / Descripción</th>
-              <th className="py-2 px-1 text-center text-blue-200 w-[10%]">Temp.</th>
-              <th className="py-2 px-1 text-center w-[10%]">Volumen</th>
-              <th className="py-2 px-1 text-center w-[10%]">Piezas</th>
-              <th className="py-2 px-1 text-center w-[10%]">U. Medida</th>
-              <th className="py-2 px-1 text-center w-[10%]">Peso</th>
-              <th className="py-2 px-2 text-left w-[25%]">Notas / Otros</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200">
-            {(order.products || []).map((prod, idx) => (
-              <tr key={idx} className="bg-white hover:bg-slate-50 transition-colors">
-                <td className="py-2 px-2 font-bold text-slate-700">{prod.name}</td>
-                <td className="py-2 px-1 text-center">
-                  <span className={`px-1 py-0.5 rounded text-[7px] font-black uppercase ${getTemperatureStyle(prod.temperature)}`}>
-                    {prod.temperature}
-                  </span>
-                </td>
-                <td className="py-2 px-1 text-center font-mono">{prod.volume || '-'}</td>
-                <td className="py-2 px-1 text-center font-mono font-bold">{prod.pieces || '-'}</td>
-                <td className="py-2 px-1 text-center lowercase text-slate-500">{prod.unitMeasure}</td>
-                <td className="py-2 px-1 text-center font-bold">{prod.weight ? `${prod.weight.toLocaleString()} kg` : '-'}</td>
-                <td className="py-2 px-2 text-slate-500 italic truncate max-w-[120px]">{prod.others || '-'}</td>
-              </tr>
-            ))}
-            {(order.products || []).length === 0 && (
-              <tr>
-                <td colSpan={7} className="py-6 text-center text-slate-400 italic bg-slate-50">
-                  <span className="material-symbols-outlined text-xl mb-1 block">inventory_2</span>
-                  No hay productos registrados
-                </td>
-              </tr>
-            )}
-          </tbody>
-          <tfoot className="bg-slate-100 font-bold border-t border-slate-200">
-            <tr>
-              <td colSpan={2} className="py-2 px-3 text-right uppercase text-slate-500">Totales:</td>
-              <td className="py-2 px-2 text-center">{order.products?.reduce((sum, p) => sum + (p.volume || 0), 0) || 0}</td>
-              <td className="py-2 px-2 text-center">{order.products?.reduce((sum, p) => sum + (p.pieces || 0), 0) || 0}</td>
-              <td className="py-2 px-2 text-center">-</td>
-              <td className="py-2 px-2 text-center">{order.products?.reduce((sum, p) => sum + (p.weight || 0), 0) || 0} kg</td>
-              <td className="py-2 px-3"></td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
-
-      {/* Logistics & Transport Details - Preview */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-          <h5 className="text-[9px] font-black text-slate-400 uppercase mb-2">Detalles de Traslado</h5>
-          <div className="space-y-1 text-[9px]">
-            <div className="flex justify-between"><span className="text-slate-500">Fecha Recep.:</span> <span className="font-bold">{order.general?.receptionDate || '-'}</span></div>
-            <div className="flex justify-between"><span className="text-slate-500">Temp. Recep.:</span> <span className="font-bold">{order.general?.receptionTemp || '-'}</span></div>
-            <div className="flex justify-between"><span className="text-slate-500">Cons. Sistema:</span> <span className="font-bold">{order.general?.conservationSystem || '-'}</span></div>
-            <div className="flex justify-between"><span className="text-slate-500">Refrig. Unidad:</span> <span className="font-bold">{order.general?.shippingUnitRefrigeration || '-'}</span></div>
-            <div className="flex justify-between"><span className="text-slate-500">Salida Est.:</span> <span className="font-bold">{order.general?.estDeparture || '-'}</span></div>
-            <div className="flex justify-between"><span className="text-slate-500">Llegada Est.:</span> <span className="font-bold">{order.general?.estArrival || '-'}</span></div>
+      {/* Contact Section: REMITENTE & DESTINATARIO */}
+      <div className="grid grid-cols-2 gap-x-12 gap-y-1 text-[10px] mb-4 font-bold">
+        {/* Remitente side */}
+        <div className="space-y-1">
+          <div className="flex gap-1">
+            <span className="uppercase whitespace-nowrap text-black">REMITENTE:</span>
+            <span className="font-normal uppercase leading-tight text-[#0070c0]">{order.provider || '-'}</span>
+          </div>
+          <div className="flex items-start gap-1">
+            <span className="uppercase whitespace-nowrap text-black">DIRECCIÓN:</span>
+            <span className="font-normal uppercase leading-snug text-[#0070c0]">{order.general?.providerAddress || '-'}</span>
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <div className="flex gap-1">
+              <span className="uppercase whitespace-nowrap text-black">NOMBRE:</span>
+              <span className="font-normal uppercase leading-tight text-[#0070c0]">{order.general?.providerContact || '-'}</span>
+            </div>
+            <div className="flex gap-1">
+              <span className="uppercase whitespace-nowrap text-black">TELÉFONO:</span>
+              <span className="font-normal uppercase leading-tight text-[#0070c0]">{order.general?.providerPhone || '-'}</span>
+            </div>
           </div>
         </div>
-        <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 flex flex-col justify-between">
-          <div>
-            <h5 className="text-[9px] font-black text-slate-400 uppercase mb-2">Documentación y Logística</h5>
-            <div className="space-y-1 text-[9px]">
-              <div className="flex justify-between"><span className="text-slate-500">Seguro de Carga:</span> <span className="font-bold">{order.documentation?.insurance || '-'}</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">Valor Factura:</span> <span className="font-bold">${order.documentation?.invoiceValue?.toLocaleString() || '0'}</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">Factura Cliente:</span> <span className="font-bold">{order.documentation?.clientInvoice || '-'}</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">Forma Pago:</span> <span className="font-bold">{order.documentation?.paymentMethod || '-'}</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">Tarimas:</span> <span className="font-bold">{order.logistics?.palletCount || '0'}</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">Peso Tarima:</span> <span className="font-bold">{order.logistics?.palletWeight || '0'} kg</span></div>
+
+        {/* Destinatario side */}
+        <div className="space-y-1">
+          <div className="flex gap-1">
+            <span className="uppercase whitespace-nowrap text-black">DESTINATARIO:</span>
+            <span className="font-normal uppercase leading-tight text-[#0070c0]">{order.client || '-'}</span>
+          </div>
+          <div className="flex items-start gap-1">
+            <span className="uppercase whitespace-nowrap text-black">DIRECCIÓN:</span>
+            <span className="font-normal uppercase leading-snug text-[#0070c0]">{order.general?.clientAddress || '-'}</span>
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <div className="flex gap-1">
+              <span className="uppercase whitespace-nowrap text-black">NOMBRE:</span>
+              <span className="font-normal uppercase leading-tight text-[#0070c0]">{order.general?.clientContact || '-'}</span>
+            </div>
+            <div className="flex gap-1">
+              <span className="uppercase whitespace-nowrap text-black">TELÉFONO:</span>
+              <span className="font-normal uppercase leading-tight text-[#0070c0]">{order.general?.clientPhone || '-'}</span>
             </div>
           </div>
         </div>
       </div>
 
-      {order.general?.observations && (
-        <div className="mb-6 p-3 bg-amber-50 border border-amber-100 rounded-lg">
-          <h5 className="text-[9px] font-black text-amber-500 uppercase mb-1">Observaciones</h5>
-          <p className="text-[9px] text-slate-700 italic">{order.general.observations}</p>
+      {/* Grouped Products Table matching Reference Image */}
+      <div className="mt-8 mb-4 overflow-hidden border border-slate-900">
+        <table className="w-full text-[10px] border-collapse">
+          <thead className="bg-[#5b9bd5] text-white uppercase font-black text-[9px]">
+            <tr>
+              <th className="py-2 px-2 text-left border border-slate-900 w-[15%]">PRODUCTO:</th>
+              <th className="py-2 px-1 text-center border border-slate-900 w-[15%]">Volumen</th>
+              <th className="py-2 px-1 text-center border border-slate-900 w-[15%]">Piezas</th>
+              <th className="py-2 px-1 text-center border border-slate-900 w-[15%]">Unidad de Medida</th>
+              <th className="py-2 px-1 text-center border border-slate-900 w-[15%]">Otros</th>
+              <th className="py-2 px-1 text-center border border-slate-900 w-[10%]">Peso</th>
+              <th className="py-2 px-2 text-left border border-slate-900 w-[15%]">Recepción de mercancía</th>
+            </tr>
+          </thead>
+          <tbody>
+            {['SECO', 'REFRIGERADO', 'CONGELADO'].map((temp) => {
+              const data = (grouped as any)[temp] || { volume: 0, pieces: 0, weight: 0, units: new Set(), others: [] };
+              return (
+                <tr key={temp} className="font-bold text-black text-center">
+                  <td className="py-2 px-2 border border-slate-900 uppercase text-left">{temp}</td>
+                  <td className="py-2 px-1 border border-slate-900 font-black text-[#0070c0]">{formatQuantity(data.volume)}</td>
+                  <td className="py-2 px-1 border border-slate-900 font-black text-[#0070c0]">{formatQuantity(data.pieces)}</td>
+                  <td className="py-2 px-1 border border-slate-900 uppercase text-[#0070c0]">{Array.from(data.units as any).join(', ') || '0'}</td>
+                  <td className="py-2 px-1 border border-slate-900 text-[#0070c0]">{(data.others as any).join(', ') || '0'}</td>
+                  <td className="py-2 px-1 border border-slate-900 font-black text-[#0070c0]">{data.weight > 0 ? formatQuantity(data.weight) : '-'}</td>
+                  <td className="py-1 px-2 border border-slate-900 text-[9px] font-black italic text-[#0070c0] text-center">
+                    {temp === 'REFRIGERADO' && (
+                      <span>{isSinThermoChecked ? 'SIN THERMO' : 'CON THERMO'}</span>
+                    )}
+                    {temp === 'CONGELADO' && (
+                      <div className="flex flex-col">
+                        <span>{isSinThermoChecked ? 'SIN THERMO' : 'CON THERMO'}</span>
+                        <span className="text-[7px]">DESCONGELADO / CONGELADO</span>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Peso Total & Contenido Producto Row */}
+      <div className="flex flex-col mb-4">
+        <div className="flex justify-between items-end">
+          <div className="flex-1 mr-12 relative h-10 flex flex-col justify-end">
+            <div className="flex items-baseline gap-2">
+              <span className="text-[9.5px] font-black text-black uppercase whitespace-nowrap">CONTENIDO PRODUCTO:</span>
+              <span className="text-[#0070c0] font-bold uppercase text-[10px] flex-1 text-center">
+                {order.products?.map(p => p.name).filter(Boolean).join(', ') || '-'}
+              </span>
+            </div>
+            <div className="border-b border-slate-900 w-full mt-1"></div>
+          </div>
+          <div className="flex flex-col items-end gap-1 mb-[-2px]">
+            <span className="text-[10px] font-black text-black uppercase leading-none">PESO TOTAL:</span>
+            <div className="border-b border-slate-200 min-w-[120px] text-right font-black text-xs pb-1 pr-2 text-[#0070c0] mt-1 border-b-slate-900">
+              {formatQuantity(totalWeight)}
+            </div>
+          </div>
         </div>
-      )}
+      </div>
+
+      {/* Detailed Conditions Section - COMPACT & FANCY */}
+      <div className="text-[9px] font-black border-t-2 border-slate-900 pt-1.5 mt-4">
+        <p className="mb-1 text-[9px] uppercase tracking-tighter text-slate-400">SE RECIBE Y ENVIA BAJO LAS SIGUIENTES CONDICIONES</p>
+
+        <div className="grid grid-cols-2 gap-x-12 gap-y-0.5">
+          {/* Left Column Operations */}
+          <div className="space-y-1">
+            <div className="flex items-center gap-1">
+              <span className="uppercase whitespace-nowrap text-black">UNIDAD CUENTA CON REFRIERACION:</span>
+              <div className="flex-1 border-b border-dotted border-slate-300 h-2 mx-1"></div>
+              <span className="font-bold text-[#0070c0]">{order.general?.shippingUnitRefrigeration || '-'}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="uppercase whitespace-nowrap text-black">SISTEMA DE CONSERVACION RECEPCION:</span>
+              <div className="flex-1 border-b border-dotted border-slate-300 h-2 mx-1"></div>
+              <span className="font-bold text-[#0070c0]">{order.general?.conservationSystem || '-'}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="uppercase whitespace-nowrap text-black">SISTEMA DE CONSERVACION ENVIO:</span>
+              <div className="flex-1 border-b border-dotted border-slate-300 h-2 mx-1"></div>
+              <span className="font-bold text-[#0070c0]">{(order.products && order.products[0]?.temperature) || '-'}</span>
+            </div>
+          </div>
+
+          {/* Right Column Physical */}
+          <div className="space-y-1">
+            <div className="flex items-center gap-1">
+              <span className="uppercase whitespace-nowrap text-black">PESO TARIMA:</span>
+              <div className="flex-1 border-b border-dotted border-slate-300 h-2 mx-1"></div>
+              <span className="font-bold text-[#0070c0]">{formatQuantity(order.logistics?.palletWeight) || '0.00'}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="uppercase whitespace-nowrap text-black">TEMPERATURA DE RECEPCION °C:</span>
+              <div className="flex-1 border-b border-dotted border-slate-300 h-2 mx-1"></div>
+              <span className="font-bold text-[#0070c0]">{order.general?.receptionTemp || '-'}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="uppercase whitespace-nowrap text-black"># DE TARIMAS:</span>
+              <div className="flex-1 border-b border-dotted border-slate-300 h-2 mx-1"></div>
+              <span className="font-bold text-[#0070c0]">{order.logistics?.palletCount || '0'}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Legend */}
+        <div className="mt-2 text-center leading-none">
+          <p className="text-[#FF0000] text-[8px] uppercase font-black">
+            ( TODA MERCANCÍA NO ASEGURADA VIAJARÁ POR CUENTA Y RIESGO DEL CLIENTE )
+          </p>
+          <p className="text-[#0070c0] text-[8px] uppercase font-black">
+            TODO PRODUCTO EMBARCADO ES RESPONSABILIDAD DEL CLIENTE / PROVEEDOR
+          </p>
+        </div>
+
+        {/* Invoice Section Row */}
+        <div className="mt-2 grid grid-cols-3 gap-6 items-end">
+          <div className="flex flex-col gap-1 text-center">
+            <span className="uppercase text-[8px] text-slate-500">CARGA ASEGURADA COSTO ADICIONAL</span>
+            <div className="border-b border-slate-900 pb-0.5 font-bold text-[10px] text-[#0070c0]">
+              {order.documentation?.insurance || '-'}
+            </div>
+          </div>
+          <div className="flex flex-col gap-1 text-center">
+            <span className="uppercase text-[8px] text-slate-500">FACTURA DEL CLIENTE</span>
+            <div className="border-b border-slate-900 pb-0.5 font-bold text-[10px] text-[#0070c0]">
+              {order.documentation?.clientInvoice || '-'}
+            </div>
+          </div>
+          <div className="flex flex-col gap-1 text-center">
+            <span className="uppercase text-[8px] text-slate-500">VALOR FACTURA</span>
+            <div className="border-b border-slate-900 pb-0.5 flex justify-between px-2 font-bold text-[10px]">
+              <span className="text-black">$</span>
+              <span className="text-[#0070c0]">{formatCurrency(order.documentation?.invoiceValue)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Payment / Shipping Row */}
+        <div className="mt-2 flex justify-between items-center gap-6">
+          <div className="flex items-center gap-1 flex-1">
+            <span className="uppercase whitespace-nowrap text-[8px] text-black">FORMA DE ENVIO:</span>
+            <div className="flex-1 border-b border-dotted border-slate-200 h-1.5 mx-1"></div>
+            <span className="font-bold text-[9px] text-[#0070c0]">{order.documentation?.shippingMethod || '-'}</span>
+          </div>
+          <div className="flex items-center gap-1 flex-1">
+            <span className="uppercase whitespace-nowrap text-[8px] text-black">FORMA DE PAGO:</span>
+            <div className="flex-1 border-b border-dotted border-slate-200 h-1.5 mx-1"></div>
+            <span className="font-bold text-[9px] text-[#0070c0]">{order.documentation?.paymentMethod || '-'}</span>
+          </div>
+          <div className="flex items-center gap-1 flex-1">
+            <span className="uppercase whitespace-nowrap text-[8px] text-black">CLIENTE REQUIERE FACTURA:</span>
+            <div className="flex-1 border-b border-dotted border-slate-200 h-1.5 mx-1"></div>
+            <span className="font-bold text-[9px] text-[#0070c0]">{order.documentation?.requiresInvoice ? 'SI' : 'NO'}</span>
+          </div>
+        </div>
+
+        {/* Observations */}
+        <div className="mt-2">
+          <span className="uppercase block text-[8px] text-slate-400 mb-0.5">OBSERVACIONES GENERALES:</span>
+          <div className="border-b border-slate-900 min-h-[16px] pb-1 text-[#0070c0] italic font-medium text-[9px]">
+            {order.general?.observations || '-'}
+          </div>
+        </div>
+
+        {/* Dates - Split timestamps */}
+        <div className="mt-2 grid grid-cols-2 gap-12">
+          <div className="flex items-center gap-2 border-b border-slate-900 pb-0.5">
+            <span className="uppercase whitespace-nowrap text-[8px] text-black">FECHA APROX SALIDA ORIGEN:</span>
+            <span className="font-bold text-[10px] text-[#0070c0]">{order.general?.estDeparture?.split('T')[0] || '-'}</span>
+          </div>
+          <div className="flex items-center gap-2 border-b border-slate-900 pb-0.5">
+            <span className="uppercase whitespace-nowrap text-[8px] text-black">FECHA APROX LLEGADA DESTINO:</span>
+            <span className="font-bold text-[10px] text-[#0070c0]">{order.general?.estArrival?.split('T')[0] || '-'}</span>
+          </div>
+        </div>
+      </div>
+
+
 
       {/* Driver & Unit Info - Preview */}
       {
@@ -159,28 +375,55 @@ const DocumentPreview: React.FC<{ order: Partial<ServiceOrder>; id?: string }> =
         )
       }
 
-      {order.attachments && order.attachments.length > 0 && (
-        <div className="mb-6">
-          <h5 className="text-[9px] font-black text-slate-400 uppercase mb-2">Evidencia Fotográfica</h5>
-          <div className="grid grid-cols-4 gap-2">
-            {order.attachments.map((src, index) => (
-              <div key={index} className="aspect-square rounded border border-slate-200 overflow-hidden">
-                <img src={src} alt={`Evidencia ${index + 1}`} className="w-full h-full object-cover" />
-              </div>
-            ))}
+      {
+        order.attachments && order.attachments.length > 0 && (
+          <div className="mb-6">
+            <h5 className="text-[9px] font-black text-slate-400 uppercase mb-2">Evidencia Fotográfica</h5>
+            <div className="grid grid-cols-4 gap-2">
+              {order.attachments.map((src, index) => (
+                <div key={index} className="aspect-square rounded border border-slate-200 overflow-hidden">
+                  <img src={src} alt={`Evidencia ${index + 1}`} className="w-full h-full object-cover" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      }
+
+      {/* Signatures Section - COMPRESSED */}
+      <div className="mt-auto pt-4 space-y-4 mb-8">
+        {/* RECEPCIÓN Row */}
+        <div className="relative">
+          <div className="absolute left-1/2 -top-3 -translate-x-1/2 text-[9px] font-black uppercase">RECEPCIÓN</div>
+          <div className="grid grid-cols-2 gap-x-20">
+            <div className="flex flex-col items-center">
+              <span className="text-[9px] font-bold h-3 uppercase">{order.general?.providerContact || '-'}</span>
+              <div className="w-full border-b border-slate-400 mt-0.5"></div>
+              <span className="text-[7px] font-black mt-0.5 text-center leading-none uppercase">NOMBRE, FIRMA Y FECHA CLIENTE QUE ENTREGA</span>
+            </div>
+            <div className="flex flex-col items-center">
+              <span className="text-[9px] font-bold h-3 uppercase">{/* Collaborator Placeholder */}</span>
+              <div className="w-full border-b border-slate-400 mt-0.5"></div>
+              <span className="text-[7px] font-black mt-0.5 text-center leading-none uppercase">NOMBRE, FIRMA Y FECHA COLABORADOR QUE RECIBE</span>
+            </div>
           </div>
         </div>
-      )}
 
-      <div className="mt-auto pt-6 border-t border-slate-100 flex justify-between items-end">
-        <div className="space-y-1">
-          <p className="text-[8px] font-black text-slate-400 uppercase">Digital Seal</p>
-          <p className="text-[7px] font-mono text-slate-400 w-48 break-all">f293h4092h3f0923h4f0923h409f23h40f23h40f23h40f23h40f23h40f23h40f23h40f23h4</p>
-        </div>
-        <div className="text-right">
-          <p className="text-[10px] font-black text-slate-400 uppercase">Valid Signature</p>
-          <div className="h-10 w-32 border-b border-slate-300 ml-auto mb-1"></div>
-          <p className="text-[8px] font-bold">OPERACIONES LOGÍSTICAS</p>
+        {/* ENTREGA Row */}
+        <div className="relative pt-2">
+          <div className="absolute left-1/2 -top-1 -translate-x-1/2 text-[9px] font-black uppercase">ENTREGA</div>
+          <div className="grid grid-cols-2 gap-x-20">
+            <div className="flex flex-col items-center">
+              <span className="text-[9px] font-bold h-3 uppercase">{/* Collaborator Placeholder */}</span>
+              <div className="w-full border-b border-slate-400 mt-0.5"></div>
+              <span className="text-[7px] font-black mt-0.5 text-center leading-none uppercase">NOMBRE, FIRMA Y FECHA COLABORADOR QUE ENTREGA</span>
+            </div>
+            <div className="flex flex-col items-center">
+              <span className="text-[9px] font-bold h-3 uppercase">{order.general?.clientContact || '-'}</span>
+              <div className="w-full border-b border-slate-400 mt-0.5"></div>
+              <span className="text-[7px] font-black mt-0.5 text-center leading-none uppercase">NOMBRE, FIRMA Y FECHA CLIENTE QUE RECIBE</span>
+            </div>
+          </div>
         </div>
       </div>
     </div >
@@ -1176,7 +1419,7 @@ const CreateServiceOrder: React.FC<{
             <h3 className="font-black text-brand-navy uppercase text-xs tracking-widest">Vista Previa</h3>
             <button
               type="button"
-              onClick={() => downloadAsPDF('document-preview-content', `Draft_${formData.general.guideNumber}.pdf`)}
+              onClick={() => downloadAsPDF('document-preview-content', `GUIA_${formData.general.guideNumber}.pdf`)}
               className="px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-slate-800 transition-colors flex items-center gap-2"
             >
               <span className="material-symbols-outlined text-sm">download</span> Descargar Borrador
@@ -1338,7 +1581,7 @@ const OrderDetailsModal: React.FC<{ order: ServiceOrder; onClose: () => void; on
               <div className="flex justify-between items-center mb-6">
                 <h3 className="font-black text-brand-navy uppercase text-xs tracking-widest">Document Preview</h3>
                 <button
-                  onClick={() => downloadAsPDF('modal-document-preview', `CartaPorte_${order.general.guideNumber}.pdf`)}
+                  onClick={() => downloadAsPDF('modal-document-preview', `GUIA_${order.general.guideNumber}.pdf`)}
                   className="px-4 py-2 bg-primary text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-blue-600 shadow-lg shadow-primary/20 transition-all active:scale-95 flex items-center gap-2"
                 >
                   <span className="material-symbols-outlined text-sm">print</span>
