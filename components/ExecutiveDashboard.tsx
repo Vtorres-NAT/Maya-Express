@@ -1,42 +1,39 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { generateLogisticsInsights } from '../lib/gemini';
 import { useData } from '../context/DataContext';
+import { useLanguage } from '../context/LanguageContext';
 
 const ExecutiveDashboard: React.FC = () => {
   const { orders, units } = useData();
-  const [aiInsights, setAiInsights] = useState<{ title: string, desc: string }[]>([]);
-  const [loadingAi, setLoadingAi] = useState(true);
+  const { language, t } = useLanguage();
 
   // Dynamic Metrics - Using live data from DataContext
   const activeShipments = orders.filter(o => o.status === 'transito' || o.status === 'confirmada').length;
-  const unitsInOperation = units.filter(u => u.status === 'In Transit' || u.status === 'Loading' || u.status === 'Operational').length;
+  const unitsInOperation = units.filter(u => u.status === 'asignado').length;
   const ordersInWarehouse = orders.filter(o => o.status === 'bodega').length;
 
-  const chartData = [
-    { name: 'Confirmada', value: orders.filter(o => o.status === 'confirmada').length, color: '#10b981' },
-    { name: 'En Tránsito', value: orders.filter(o => o.status === 'transito').length, color: '#3b82f6' },
-    { name: 'En Bodega', value: orders.filter(o => o.status === 'bodega').length, color: '#f59e0b' },
-  ];
+  // Calculate operational efficiency (Orders closed vs Total orders that aren't drafts)
+  const nonDraftOrders = orders.filter(o => o.status !== 'borrador');
+  const efficiency = nonDraftOrders.length > 0
+    ? ((orders.filter(o => o.status === 'cerrada').length / nonDraftOrders.length) * 100).toFixed(1)
+    : '0';
 
-  useEffect(() => {
-    const fetchInsights = async () => {
-      const stats = { daily: 142, revenue: 2.4, efficiency: 92.5 };
-      const res = await generateLogisticsInsights(stats);
-      setAiInsights(res.insights);
-      setLoadingAi(false);
-    };
-    fetchInsights();
-  }, []);
+  const chartData = [
+    { name: language === 'en' ? 'Draft' : 'Borrador', value: orders.filter(o => o.status === 'borrador').length, color: '#94a3b8' },
+    { name: language === 'en' ? 'Confirmed' : 'Confirmada', value: orders.filter(o => o.status === 'confirmada').length, color: '#10b981' },
+    { name: language === 'en' ? 'In Transit' : 'En Tránsito', value: orders.filter(o => o.status === 'transito').length, color: '#3b82f6' },
+    { name: language === 'en' ? 'In Warehouse' : 'En Bodega', value: orders.filter(o => o.status === 'bodega').length, color: '#f59e0b' },
+    { name: language === 'en' ? 'Closed' : 'Cerradas', value: orders.filter(o => o.status === 'cerrada').length, color: '#64748b' },
+  ];
 
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
-          { label: 'Envíos Activos', value: activeShipments, trend: 'Confirmados/Ruta', icon: 'local_shipping', color: 'blue' },
-          { label: 'Unidades en Operación', value: unitsInOperation, trend: 'Tránsito/Carga', icon: 'route', color: 'emerald' },
-          { label: 'Órdenes en Bodega', value: ordersInWarehouse, trend: 'Stock Hub', icon: 'warehouse', color: 'amber' },
-          { label: 'Eficiencia Operativa', value: '94.2%', trend: 'Objetivo: 95%', icon: 'precision_manufacturing', color: 'slate' }
+          { label: t('dash.kpi.active_shipments'), value: activeShipments, trend: t('dash.kpi.active_shipments_desc'), icon: 'local_shipping', color: 'blue' },
+          { label: t('dash.kpi.units_operation'), value: unitsInOperation, trend: t('dash.kpi.units_operation_desc'), icon: 'route', color: 'emerald' },
+          { label: t('dash.kpi.warehouse_load'), value: ordersInWarehouse, trend: t('dash.kpi.warehouse_load_desc'), icon: 'warehouse', color: 'amber' },
+          { label: t('dash.kpi.efficiency'), value: `${efficiency}%`, trend: t('dash.kpi.efficiency_desc'), icon: 'precision_manufacturing', color: 'slate' }
         ].map((kpi, i) => (
           <div key={i} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-primary transition-all group">
             <div className="flex justify-between items-start mb-4">
@@ -53,40 +50,12 @@ const ExecutiveDashboard: React.FC = () => {
         ))}
       </div>
 
-      {/* AI Insights Section */}
-      <div className="bg-gradient-to-br from-brand-navy to-brand-dark rounded-3xl p-8 text-white border-b-4 border-primary shadow-2xl overflow-hidden relative">
-        <div className="absolute top-0 right-0 p-8 opacity-10">
-          <span className="material-symbols-outlined text-[120px]">psychology</span>
-        </div>
-        <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-6">
-            <span className="bg-blue-500/20 text-blue-400 p-2 rounded-lg animate-pulse">
-              <span className="material-symbols-outlined">auto_awesome</span>
-            </span>
-            <h3 className="text-sm font-black uppercase tracking-[0.2em]">Maya AI: Perspectivas Estratégicas</h3>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {loadingAi ? (
-              [1, 2, 3].map(i => <div key={i} className="h-24 bg-white/5 rounded-2xl animate-pulse"></div>)
-            ) : (
-              aiInsights.map((insight, i) => (
-                <div key={i} className="bg-white/5 border border-white/10 p-5 rounded-2xl hover:bg-white/10 transition-colors">
-                  <p className="text-blue-400 font-black text-xs uppercase mb-2 tracking-tighter">{insight.title}</p>
-                  <p className="text-[11px] text-slate-300 leading-relaxed font-medium">{insight.desc}</p>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
-
       <div className="grid grid-cols-12 gap-8">
         <div className="col-span-12 xl:col-span-8 bg-white rounded-3xl border border-slate-200 shadow-sm p-8">
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h4 className="font-black text-brand-navy uppercase text-sm tracking-widest">Distribución de Órdenes</h4>
-              <p className="text-xs text-slate-500 font-medium">Estado actual del flujo operativo</p>
+              <h4 className="font-black text-brand-navy uppercase text-sm tracking-widest">{t('dash.chart.title')}</h4>
+              <p className="text-xs text-slate-500 font-medium">{t('dash.chart.subtitle')}</p>
             </div>
           </div>
           <div className="h-[350px] w-full">
@@ -111,24 +80,29 @@ const ExecutiveDashboard: React.FC = () => {
 
         <div className="col-span-12 xl:col-span-4 flex flex-col gap-6">
           <h4 className="font-black text-brand-navy flex items-center gap-3 uppercase text-sm tracking-widest">
-            <span className="material-symbols-outlined text-primary">analytics</span> Eventos Recientes
+            <span className="material-symbols-outlined text-primary">analytics</span> {t('dash.recent.title')}
           </h4>
           <div className="relative pl-4 border-l-2 border-slate-100 space-y-8 max-h-[480px] overflow-y-auto pr-2 custom-scrollbar">
-            {orders.slice(0, 4).map((order, i) => (
-              <div key={i} className="relative">
-                <div className={`absolute -left-[25px] top-0 w-4 h-4 rounded-full border-2 border-white shadow-sm flex items-center justify-center ${order.status === 'transito' ? 'bg-blue-500' :
-                  order.status === 'bodega' ? 'bg-amber-500' : 'bg-emerald-500'
-                  }`}></div>
-                <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-primary transition-colors">
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="text-[9px] font-black uppercase text-slate-400 tracking-tighter">Guía: {order.general.guideNumber}</span>
-                    <span className="text-[9px] font-mono text-slate-300">Hoy</span>
+            {orders.length === 0 ? (
+              <p className="text-xs text-slate-400 italic">{t('dash.recent.empty')}</p>
+            ) : (
+              orders.slice(0, 6).map((order, i) => (
+                <div key={i} className="relative">
+                  <div className={`absolute -left-[25px] top-0 w-4 h-4 rounded-full border-2 border-white shadow-sm flex items-center justify-center ${order.status === 'transito' ? 'bg-blue-500' :
+                    order.status === 'bodega' ? 'bg-amber-500' :
+                      order.status === 'cerrada' ? 'bg-slate-500' : 'bg-emerald-500'
+                    }`}></div>
+                  <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 hover:border-primary transition-colors">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-[9px] font-black uppercase text-slate-400 tracking-tighter">{t('dash.order.guide')}: {order.general.guideNumber}</span>
+                      <span className="text-[9px] font-mono text-slate-300">ACTIVO</span>
+                    </div>
+                    <p className="text-xs font-bold text-brand-navy">{t('dash.order.destination')} {order.general.destination}</p>
+                    <p className="text-[10px] text-slate-500 mt-1">{t('dash.order.status')}: <span className="capitalize font-black text-primary">{order.status}</span></p>
                   </div>
-                  <p className="text-xs font-bold text-brand-navy">Envío a {order.general.destination}</p>
-                  <p className="text-[10px] text-slate-500 mt-1">Estatus: <span className="capitalize font-black text-primary">{order.status}</span></p>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>

@@ -43,14 +43,18 @@ const AuthenticatedApp: React.FC = () => {
   );
 };
 
+import { LanguageProvider } from './context/LanguageContext';
+
 const App: React.FC = () => {
   return (
     <HashRouter>
-      <AuthProvider>
-        <DataProvider>
-          <AuthenticatedApp />
-        </DataProvider>
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <DataProvider>
+            <AuthenticatedApp />
+          </DataProvider>
+        </AuthProvider>
+      </LanguageProvider>
     </HashRouter>
   );
 };
