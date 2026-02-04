@@ -27,7 +27,14 @@ const ExecutiveDashboard: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
+    <div className="space-y-6 animate-in fade-in duration-700">
+      <div className="flex justify-between items-center bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div>
+          <h1 className="text-2xl font-black text-brand-navy uppercase tracking-tight">{t('module.dashboard.title')}</h1>
+          <p className="text-sm text-slate-500 font-medium mt-1">{t('module.dashboard.subtitle')}</p>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {[
           { label: t('dash.kpi.active_shipments'), value: activeShipments, trend: t('dash.kpi.active_shipments_desc'), icon: 'local_shipping', color: 'blue' },

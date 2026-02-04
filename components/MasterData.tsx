@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
+import { useLanguage } from '../context/LanguageContext';
 import { Unit, Driver } from '../types';
 
 const MasterData: React.FC = () => {
@@ -14,6 +15,7 @@ const MasterData: React.FC = () => {
     updateDriver,
     deleteDriver
   } = useData();
+  const { t } = useLanguage();
 
   const [activeTab, setActiveTab] = useState<'units' | 'drivers'>('units');
   const [searchTerm, setSearchTerm] = useState('');
@@ -31,7 +33,13 @@ const MasterData: React.FC = () => {
   const data = activeTab === 'units' ? filteredUnits : filteredDrivers;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div>
+          <h1 className="text-2xl font-black text-brand-navy uppercase tracking-tight">{t('module.master_data.title')}</h1>
+          <p className="text-sm text-slate-500 font-medium mt-1">{t('module.master_data.subtitle')}</p>
+        </div>
+      </div>
       <div className="flex gap-8 border-b border-slate-200">
         <button
           onClick={() => setActiveTab('units')}
@@ -47,7 +55,7 @@ const MasterData: React.FC = () => {
         </button>
       </div>
 
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="p-8 border-b border-slate-100 flex justify-between items-center gap-4">
           <div className="relative flex-1 max-w-md">
             <span className="material-symbols-outlined absolute left-3 top-2.5 text-slate-400">search</span>

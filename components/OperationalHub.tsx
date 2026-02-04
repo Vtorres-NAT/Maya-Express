@@ -1,10 +1,12 @@
 import React from 'react';
 import { useData } from '../context/DataContext';
+import { useLanguage } from '../context/LanguageContext';
 import { Unit, Driver } from '../types';
 
 const OperationalHub: React.FC = () => {
 
   const { units, drivers, addUnit, updateUnit, addDriver, updateDriver } = useData();
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = React.useState<'units' | 'drivers'>('units');
   const [showAddForm, setShowAddForm] = React.useState(false);
   const [editingId, setEditingId] = React.useState<string | null>(null);
@@ -89,8 +91,8 @@ const OperationalHub: React.FC = () => {
     <div className="space-y-8 text-slate-800">
       <div className="flex justify-between items-center bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
         <div>
-          <h1 className="text-2xl font-black text-brand-navy uppercase tracking-tight">Hub Operativo</h1>
-          <p className="text-sm text-slate-500 font-medium">Workforce & Fleet Management Center</p>
+          <h1 className="text-2xl font-black text-brand-navy uppercase tracking-tight">{t('module.ops_hub.title')}</h1>
+          <p className="text-sm text-slate-500 font-medium mt-1">{t('module.ops_hub.subtitle')}</p>
         </div>
         <div className="flex gap-4 items-center">
           <div className="flex bg-slate-100 p-1 rounded-xl">

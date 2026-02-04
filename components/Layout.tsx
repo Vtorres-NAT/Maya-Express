@@ -26,50 +26,69 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   ];
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex h-screen bg-slate-50 overflow-hidden">
       {/* Sidebar */}
-      <aside className={`fixed left-0 top-0 h-full bg-brand-navy border-r border-white/10 z-30 hidden lg:block text-white transition-all duration-300 ease-in-out ${isCollapsed ? 'w-20' : 'w-72'}`}>
-        <div className={`p-6 border-b border-white/10 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
-          {!isCollapsed && (
-            <div className="flex flex-col gap-1">
-              <span className="text-[10px] uppercase tracking-[0.3em] text-blue-400 font-bold">{t('nav.logistics')}</span>
-              <h1 className="font-black text-xl leading-none tracking-tight">
-                MAYA <span className="text-blue-400">EXPRESS</span>
-              </h1>
-            </div>
-          )}
-          {isCollapsed && <div className="h-8"></div>}
-        </div>
+      <aside className={`flex-shrink-0 h-full bg-brand-navy border-r border-white/10 z-30 hidden lg:block text-white transition-all duration-300 ease-in-out relative ${isCollapsed ? 'w-24' : 'w-72'}`}>
+        <div className={`flex flex-col h-full bg-brand-navy`}>
+          {/* Logo Section */}
+          <div className="p-6 h-20 flex items-center border-b border-white/5">
+            {!isCollapsed ? (
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[9px] uppercase tracking-[0.4em] text-blue-400 font-black opacity-80">CONSOLIDADOS</span>
+                <h1 className="font-black text-xl leading-none tracking-tight">
+                  MAYA <span className="text-blue-400">EXPRESS</span>
+                </h1>
+              </div>
+            ) : (
+              <div className="w-full flex justify-center">
+                <span className="text-blue-400 font-black text-xl tracking-tighter">CME</span>
+              </div>
+            )}
+          </div>
 
-        <nav className="p-3 mt-4 space-y-1">
-          {navItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              title={isCollapsed ? item.label : ''}
-              className={`flex items-center gap-3 rounded-lg transition-all ${isCollapsed ? 'justify-center p-3' : 'px-6 py-3.5'} ${isActive(item.path)
-                ? 'bg-primary/20 text-blue-400 font-bold border-l-4 border-primary'
-                : 'text-slate-300 hover:bg-white/5'
-                }`}
+          {/* Navigation */}
+          <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar">
+            {navItems.map((item) => {
+              const active = isActive(item.path);
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  title={isCollapsed ? item.label : ''}
+                  className={`
+                    flex items-center gap-4 rounded-xl transition-all duration-200 group
+                    ${isCollapsed ? 'justify-center h-12 w-12 mx-auto' : 'px-4 py-3'}
+                    ${active
+                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/40 font-bold'
+                      : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                    }
+                  `}
+                >
+                  <span className={`material-symbols-outlined transition-transform duration-200 ${active ? 'scale-110' : 'group-hover:scale-110'}`}>
+                    {item.icon}
+                  </span>
+                  {!isCollapsed && <span className="text-sm truncate">{item.label}</span>}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Sidebar Toggle - Repositioned and Animated */}
+          <div className="absolute top-1/2 -right-4 -translate-y-1/2 z-50">
+            <button
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white shadow-xl hover:bg-blue-500 transition-all border-2 border-brand-navy animate-breathe"
             >
-              <span className="material-symbols-outlined text-xl">{item.icon}</span>
-              {!isCollapsed && <span className="text-sm truncate">{item.label}</span>}
-            </Link>
-          ))}
-        </nav>
-
-        <button
-          onClick={() => setIsCollapsed(!isCollapsed)}
-          className="absolute bottom-4 right-[-12px] w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-blue-500 transition-colors z-50 border-2 border-slate-50"
-        >
-          <span className="material-symbols-outlined text-sm font-black">
-            {isCollapsed ? 'chevron_right' : 'chevron_left'}
-          </span>
-        </button>
+              <span className="material-symbols-outlined text-base font-black">
+                {isCollapsed ? 'chevron_right' : 'chevron_left'}
+              </span>
+            </button>
+          </div>
+        </div>
       </aside>
 
-      <main className={`flex-1 flex flex-col min-h-screen relative transition-all duration-300 ${isCollapsed ? 'lg:pl-20' : 'lg:pl-72'}`}>
-        <header className="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-10 sticky top-0 z-20 shadow-sm">
+      <main className="flex-1 flex flex-col min-w-0 h-full relative">
+        <header className="flex-shrink-0 h-20 bg-white border-b border-slate-200 flex items-center justify-between px-10 z-20 shadow-sm">
           <div className="flex items-center gap-4">
             {/* Language Toggle */}
             <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
@@ -123,7 +142,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
         </header>
 
-        <section className="p-8 lg:p-10 max-w-7xl mx-auto w-full">
+        <section className="flex-1 p-8 lg:p-10 max-w-[1600px] mx-auto w-full min-w-0 overflow-y-auto custom-scrollbar flex flex-col">
           {children}
         </section>
       </main>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLanguage } from '../context/LanguageContext';
 import { ServiceOrder, ServiceOrderProduct } from '../types';
 import { MOCK_ORDERS } from '../data/mockData';
 import { useData } from '../context/DataContext';
@@ -840,8 +841,8 @@ const CreateServiceOrder: React.FC<{
         </div>
       </div>
 
-      <div className="grid grid-cols-12 gap-8">
-        <div className="col-span-12 xl:col-span-7 space-y-4">
+      <div className="grid grid-cols-12 gap-8 items-start">
+        <div className="col-span-12 xl:col-span-5 space-y-4">
 
           {/* TOP HEADER: GUIDE NUMBER & TRIP NUMBER */}
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col md:flex-row items-start md:items-center justify-start gap-6 md:gap-12 mb-6">
@@ -1414,7 +1415,7 @@ const CreateServiceOrder: React.FC<{
           </FormSection>
         </div>
 
-        <div className="col-span-12 xl:col-span-5 flex flex-col gap-4">
+        <div className="col-span-12 xl:col-span-7 flex flex-col gap-4">
           <div className="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200">
             <h3 className="font-black text-brand-navy uppercase text-xs tracking-widest">Vista Previa</h3>
             <button
@@ -1603,7 +1604,8 @@ const OrderDetailsModal: React.FC<{ order: ServiceOrder; onClose: () => void; on
 };
 
 const ServiceOrders: React.FC = () => {
-  const { orders, isLoading, error, addOrder, updateOrder } = useData();
+  const { orders, loading, error, addOrder, updateOrder } = useData();
+  const { t } = useLanguage();
   const [view, setView] = useState<'list' | 'create' | 'edit'>('list');
 
   // Column Visibility State
@@ -1693,10 +1695,16 @@ const ServiceOrders: React.FC = () => {
     alerts: 0
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      <div className="flex flex-col items-center justify-center p-20 space-y-4">
+        <div className="relative">
+          <div className="w-16 h-16 border-4 border-slate-100 border-t-primary rounded-full animate-spin"></div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-8 h-8 bg-primary/10 rounded-full animate-pulse"></div>
+          </div>
+        </div>
+        <p className="text-sm font-black text-brand-navy uppercase tracking-widest animate-pulse">{t('common.loading')}...</p>
       </div>
     );
   }
@@ -1727,11 +1735,11 @@ const ServiceOrders: React.FC = () => {
 
   return (
     <>
-      <div className="space-y-8">
-        <div className="flex items-center justify-between">
+      <div className="flex flex-col h-full space-y-6 overflow-hidden">
+        <div className="flex justify-between items-center bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
           <div>
-            <h1 className="text-2xl font-black text-brand-navy uppercase tracking-tight">Service Orders</h1>
-            <p className="text-sm text-slate-500 font-medium">Gestión de órdenes, cotizaciones, y documentación operativa</p>
+            <h1 className="text-2xl font-black text-brand-navy uppercase tracking-tight">{t('module.orders.title')}</h1>
+            <p className="text-sm text-slate-500 font-medium mt-1">{t('module.orders.subtitle')}</p>
           </div>
           <div className="flex items-center gap-3">
             <button onClick={() => setView('create')} className="px-4 py-2 bg-primary text-white rounded-lg text-xs font-black uppercase tracking-wider shadow-lg shadow-primary/30 hover:bg-blue-600 transition-colors flex items-center gap-2">
@@ -1740,17 +1748,17 @@ const ServiceOrders: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden min-h-[600px]">
+        <div className="flex-1 flex flex-col bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           {/* Filters (Simplified for brevity) */}
-          <div className="p-6 border-b border-slate-100 space-y-6">
-            <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex flex-wrap gap-3 items-center">
-              <button className="bg-white border border-slate-200 py-2.5 px-4 rounded-xl text-xs font-bold text-slate-600 shadow-sm outline-none hover:border-slate-300 hover:bg-slate-50 transition-all flex items-center gap-2">
+          <div className="flex-shrink-0 p-5 border-b border-slate-100">
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex flex-wrap gap-2 items-center">
+              <button className="bg-white border border-slate-200 py-2 px-3 rounded-lg text-[11px] font-bold text-slate-600 shadow-sm outline-none hover:border-slate-300 hover:bg-slate-50 transition-all flex items-center gap-1.5">
                 Cliente <span className="material-symbols-outlined text-sm text-slate-400">expand_more</span>
               </button>
-              <button className="bg-white border border-slate-200 py-2.5 px-4 rounded-xl text-xs font-bold text-slate-600 shadow-sm outline-none hover:border-slate-300 hover:bg-slate-50 transition-all flex items-center gap-2">
+              <button className="bg-white border border-slate-200 py-2 px-3 rounded-lg text-[11px] font-bold text-slate-600 shadow-sm outline-none hover:border-slate-300 hover:bg-slate-50 transition-all flex items-center gap-1.5">
                 Estado <span className="material-symbols-outlined text-sm text-slate-400">expand_more</span>
               </button>
-              <button className="bg-white border border-slate-200 py-2.5 px-4 rounded-xl text-xs font-bold text-slate-600 shadow-sm outline-none hover:border-slate-300 hover:bg-slate-50 transition-all flex items-center gap-2">
+              <button className="bg-white border border-slate-200 py-2 px-3 rounded-lg text-[11px] font-bold text-slate-600 shadow-sm outline-none hover:border-slate-300 hover:bg-slate-50 transition-all flex items-center gap-1.5">
                 Fecha <span className="material-symbols-outlined text-sm text-slate-400">calendar_today</span>
               </button>
 
@@ -1758,7 +1766,7 @@ const ServiceOrders: React.FC = () => {
               <div className="relative">
                 <button
                   onClick={() => setShowColumnMenu(!showColumnMenu)}
-                  className="bg-white border border-slate-200 py-2.5 px-4 rounded-xl text-xs font-bold text-slate-600 shadow-sm outline-none hover:border-slate-300 hover:bg-slate-50 transition-all flex items-center gap-2"
+                  className="bg-white border border-slate-200 py-2 px-3 rounded-lg text-[11px] font-bold text-slate-600 shadow-sm outline-none hover:border-slate-300 hover:bg-slate-50 transition-all flex items-center gap-1.5"
                 >
                   Columnas <span className="material-symbols-outlined text-sm text-slate-400">view_column</span>
                 </button>
@@ -1781,94 +1789,95 @@ const ServiceOrders: React.FC = () => {
                 )}
               </div>
 
-              <button className="ml-auto bg-white py-2.5 px-5 rounded-xl text-xs font-bold text-slate-400 shadow-sm border border-slate-200">Limpiar</button>
+              <button className="ml-auto bg-white py-2 px-4 rounded-lg text-[11px] font-bold text-slate-400 shadow-sm border border-slate-200">Limpiar</button>
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="bg-slate-50/50">
-                <tr>
-                  {visibleColumns.guideNumber && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider sticky left-0 bg-slate-50 z-10 whitespace-nowrap">No. Guía</th>}
-                  {visibleColumns.tripNumber && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">No. Viaje</th>}
-                  {visibleColumns.client && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Cliente</th>}
-                  {visibleColumns.origin && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Origen</th>}
-                  {visibleColumns.destination && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Destino</th>}
-                  {visibleColumns.products && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider text-center whitespace-nowrap">Productos</th>}
-                  {visibleColumns.unit && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Unidad</th>}
-                  {visibleColumns.receptionDate && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Fecha Rec.</th>}
-                  {visibleColumns.receptionTemp && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Temp. Rec.</th>}
-                  {visibleColumns.estDeparture && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider text-center whitespace-nowrap">Salida Estimada</th>}
-                  {visibleColumns.estArrival && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider text-center whitespace-nowrap">Llegada Estimada</th>}
-                  {visibleColumns.insurance && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider text-center whitespace-nowrap">Seguro</th>}
-                  {visibleColumns.clientInvoice && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Factura</th>}
-                  {visibleColumns.invoiceValue && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider text-right whitespace-nowrap">Valor</th>}
-                  {visibleColumns.paymentMethod && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Forma Pago</th>}
-                  {visibleColumns.shippingMethod && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Forma Envío</th>}
-                  {visibleColumns.requiresInvoice && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider text-center whitespace-nowrap">Req. Factura</th>}
-                  {visibleColumns.observations && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Observaciones</th>}
-                  {visibleColumns.status && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Estado</th>}
-                  {visibleColumns.actions && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">Acciones</th>}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {orders.map((order, index) => (
-                  <tr
-                    key={order.id}
-                    className="hover:bg-slate-50/50 transition-colors cursor-pointer group whitespace-nowrap"
-                  >
-                    {visibleColumns.guideNumber && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-brand-navy sticky left-0 bg-white group-hover:bg-slate-50 z-10">{order.general.guideNumber}</td>}
-                    {visibleColumns.tripNumber && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-slate-500">{order.general.tripNumber || '-'}</td>}
-                    {visibleColumns.client && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-medium text-slate-600">{order.client}</td>}
-                    {visibleColumns.origin && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-slate-600">{order.general.origin || order.general.reception}</td>}
-                    {visibleColumns.destination && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-primary">{order.general.destination}</td>}
-                    {visibleColumns.products && (
-                      <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-center">
-                        <div className="flex flex-col gap-1 items-center">
-                          {order.products.map((p, i) => (
-                            <div key={i} className="flex items-center gap-1">
-                              <span className="text-[10px] font-medium text-slate-600">{p.name}</span>
-                              <TemperatureBadge temp={p.temperature} />
-                            </div>
-                          ))}
-                        </div>
-                      </td>
-                    )}
-                    {visibleColumns.unit && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-medium text-slate-600">{order.assignedUnit?.id || 'Pendiente'}</td>}
-                    {visibleColumns.receptionDate && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-medium text-slate-500">{order.general.receptionDate}</td>}
-                    {visibleColumns.receptionTemp && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-blue-600">{order.general.receptionTemp || '-'}</td>}
-                    {visibleColumns.estDeparture && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-medium text-slate-500 text-center">{order.general.estDeparture || '-'}</td>}
-                    {visibleColumns.estArrival && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-medium text-slate-500 text-center">{order.general.estArrival || '-'}</td>}
-                    {visibleColumns.insurance && (
-                      <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-center">
-                        <span className={order.documentation.insurance === 'SI' ? 'text-emerald-600' : 'text-slate-400'}>{order.documentation.insurance || 'NO'}</span>
-                      </td>
-                    )}
-                    {visibleColumns.clientInvoice && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-medium text-slate-600">{order.documentation.clientInvoice || '-'}</td>}
-                    {visibleColumns.invoiceValue && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-black text-slate-900 text-right">${order.documentation.invoiceValue?.toLocaleString() || '0'}</td>}
-                    {visibleColumns.paymentMethod && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-[10px] font-bold text-slate-600 uppercase italic">{order.documentation.paymentMethod || '-'}</td>}
-                    {visibleColumns.shippingMethod && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-[10px] font-bold text-slate-600 uppercase italic">{order.documentation.shippingMethod || '-'}</td>}
-                    {visibleColumns.requiresInvoice && (
-                      <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-center">
-                        <span className={order.documentation.requiresInvoice ? 'text-emerald-600' : 'text-slate-400'}>{order.documentation.requiresInvoice ? 'SI' : 'NO'}</span>
-                      </td>
-                    )}
-                    {visibleColumns.observations && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-[10px] text-slate-500 whitespace-normal min-w-[200px]">{order.general.observations || '-'}</td>}
-                    {visibleColumns.status && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4"><StatusBadge status={order.status} /></td>}
-                    {visibleColumns.actions && (
-                      <td className="px-6 py-4 text-slate-400 flex items-center gap-2">
-                        <button onClick={() => setSelectedOrder(order)} className="hover:text-primary transition-colors" title="Ver Detalles">
-                          <span className="material-symbols-outlined">visibility</span>
-                        </button>
-                        <button onClick={() => navigate(`/tracking?guide=${order.general.guideNumber}`)} className="hover:text-primary transition-colors" title="Rastrear en Mapa">
-                          <span className="material-symbols-outlined">location_on</span>
-                        </button>
-                      </td>
-                    )}
+          <div className="flex-1 w-full overflow-hidden flex flex-col">
+            <div className="flex-1 overflow-auto custom-scrollbar">
+              <table className="w-full text-left">
+                <thead className="bg-slate-50/50">
+                  <tr>
+                    {visibleColumns.guideNumber && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest sticky left-0 bg-slate-50 z-10 whitespace-nowrap">No. Guía</th>}
+                    {visibleColumns.tripNumber && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">No. Viaje</th>}
+                    {visibleColumns.client && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Cliente</th>}
+                    {visibleColumns.origin && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Origen</th>}
+                    {visibleColumns.destination && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Destino</th>}
+                    {visibleColumns.products && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center whitespace-nowrap">Productos</th>}
+                    {visibleColumns.unit && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Unidad</th>}
+                    {visibleColumns.receptionDate && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Fecha Rec.</th>}
+                    {visibleColumns.receptionTemp && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Temp. Rec.</th>}
+                    {visibleColumns.estDeparture && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center whitespace-nowrap">Salida Estimada</th>}
+                    {visibleColumns.estArrival && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center whitespace-nowrap">Llegada Estimada</th>}
+                    {visibleColumns.insurance && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center whitespace-nowrap">Seguro</th>}
+                    {visibleColumns.clientInvoice && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Factura</th>}
+                    {visibleColumns.invoiceValue && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right whitespace-nowrap">Valor</th>}
+                    {visibleColumns.paymentMethod && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Forma Pago</th>}
+                    {visibleColumns.shippingMethod && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Forma Envío</th>}
+                    {visibleColumns.requiresInvoice && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center whitespace-nowrap">Req. Factura</th>}
+                    {visibleColumns.observations && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Observaciones</th>}
+                    {visibleColumns.status && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Estado</th>}
+                    {visibleColumns.actions && <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Acciones</th>}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {orders.map((order, index) => (
+                    <tr
+                      key={order.id}
+                    >
+                      {visibleColumns.guideNumber && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-brand-navy sticky left-0 bg-white group-hover:bg-slate-50 z-10">{order.general.guideNumber}</td>}
+                      {visibleColumns.tripNumber && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-slate-500">{order.general.tripNumber || '-'}</td>}
+                      {visibleColumns.client && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-medium text-slate-600 capitalize whitespace-normal min-w-[150px]">{order.client.toLowerCase()}</td>}
+                      {visibleColumns.origin && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-slate-600 capitalize whitespace-normal min-w-[250px]">{(order.general.origin || order.general.reception || '').toLowerCase()}</td>}
+                      {visibleColumns.destination && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-primary capitalize whitespace-normal min-w-[120px]">{order.general.destination.toLowerCase()}</td>}
+                      {visibleColumns.products && (
+                        <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-center">
+                          <div className="flex flex-col gap-1 items-center">
+                            {order.products.map((p, i) => (
+                              <div key={i} className="flex items-center gap-1">
+                                <span className="text-[10px] font-medium text-slate-600 capitalize">{p.name.toLowerCase()}</span>
+                                <TemperatureBadge temp={p.temperature} />
+                              </div>
+                            ))}
+                          </div>
+                        </td>
+                      )}
+                      {visibleColumns.unit && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-medium text-slate-600">{order.assignedUnit?.id || 'Pendiente'}</td>}
+                      {visibleColumns.receptionDate && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-medium text-slate-500">{order.general.receptionDate}</td>}
+                      {visibleColumns.receptionTemp && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-blue-600">{order.general.receptionTemp || '-'}</td>}
+                      {visibleColumns.estDeparture && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-medium text-slate-500 text-center">{order.general.estDeparture || '-'}</td>}
+                      {visibleColumns.estArrival && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-medium text-slate-500 text-center">{order.general.estArrival || '-'}</td>}
+                      {visibleColumns.insurance && (
+                        <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-center">
+                          <span className={`${order.documentation.insurance === 'SI' ? 'text-emerald-600' : 'text-slate-400'} capitalize`}>{(order.documentation.insurance || 'no').toLowerCase()}</span>
+                        </td>
+                      )}
+                      {visibleColumns.clientInvoice && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-medium text-slate-600">{order.documentation.clientInvoice || '-'}</td>}
+                      {visibleColumns.invoiceValue && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-black text-slate-900 text-right">${order.documentation.invoiceValue?.toLocaleString() || '0'}</td>}
+                      {visibleColumns.paymentMethod && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-[10px] font-bold text-slate-600 capitalize italic">{(order.documentation.paymentMethod || '-').toLowerCase()}</td>}
+                      {visibleColumns.shippingMethod && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-[10px] font-bold text-slate-600 capitalize italic">{(order.documentation.shippingMethod || '-').toLowerCase()}</td>}
+                      {visibleColumns.requiresInvoice && (
+                        <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-xs font-bold text-center">
+                          <span className={order.documentation.requiresInvoice ? 'text-emerald-600' : 'text-slate-400'}>{order.documentation.requiresInvoice ? 'SI' : 'NO'}</span>
+                        </td>
+                      )}
+                      {visibleColumns.observations && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4 text-[10px] text-slate-500 whitespace-normal min-w-[200px] capitalize">{(order.general.observations || '-').toLowerCase()}</td>}
+                      {visibleColumns.status && <td onClick={() => setSelectedOrder(order)} className="px-6 py-4"><StatusBadge status={order.status} /></td>}
+                      {visibleColumns.actions && (
+                        <td className="px-6 py-4 text-slate-400 flex items-center gap-2">
+                          <button onClick={() => setSelectedOrder(order)} className="hover:text-primary transition-colors" title="Ver Detalles">
+                            <span className="material-symbols-outlined">visibility</span>
+                          </button>
+                          <button onClick={() => navigate(`/tracking?guide=${order.general.guideNumber}`)} className="hover:text-primary transition-colors" title="Rastrear en Mapa">
+                            <span className="material-symbols-outlined">location_on</span>
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
