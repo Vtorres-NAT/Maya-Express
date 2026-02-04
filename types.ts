@@ -89,12 +89,6 @@ export interface ServiceOrder {
   client: string; // Client Name (kept for UI consistency)
   provider?: string; // Provider Name
   status: 'transito' | 'bodega' | 'confirmada' | 'borrador' | 'cerrada';
-  assignedUnit?: string; // Unit ID
-  assignedDriver?: string; // Driver ID
-  evidence?: {
-    photos: string[];
-    observations?: string;
-  };
 
   // New Fields for Driver and Unit Selection
   driverId?: string;
@@ -134,7 +128,8 @@ export interface ServiceOrder {
   };
 
   // Detailed Fleet Info (New)
-  // Fields moved to the top of the interface as string IDs
+  assignedUnit?: Unit;
+  assignedDriver?: Driver;
 
   // Dynamic Products List (Replaces Physical Data & Merchandise)
   products: ServiceOrderProduct[];
@@ -173,7 +168,12 @@ export interface FleetUnit {
   brand: string;
   plates: string;
   color: string;
-  assignedDriverId?: string; // Reference to Driver.id
+  driver: {
+    name: string;
+    phone: string;
+    license?: string;
+    rfc?: string;
+  };
   loc: string;
   colorCode: 'emerald' | 'blue' | 'amber' | 'slate' | 'primary';
 }

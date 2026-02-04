@@ -501,7 +501,7 @@ const StatusBadge: React.FC<{ status: ServiceOrder['status'] }> = ({ status }) =
     transito: 'bg-blue-100 text-blue-700',
     bodega: 'bg-amber-100 text-amber-700',
     confirmada: 'bg-emerald-100 text-emerald-700',
-    borrador: 'bg-slate-100 text-slate-600 border border-slate-200',
+    borrador: 'bg-slate-100 text-slate-600',
     cerrada: 'bg-slate-200 text-slate-500',
   };
   const labels = {
@@ -648,55 +648,6 @@ const CreateServiceOrder: React.FC<{
     documentation: { insurance: '', clientInvoice: '', invoiceValue: 0, shippingMethod: '', paymentMethod: '', requiresInvoice: false },
     attachments: [] // Initialize attachments
   });
-
-  // Photo helpers
-  const handlePhotoCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files) {
-      Array.from(files).forEach(file => {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const img = new Image();
-          img.src = event.target?.result as string;
-          img.onload = () => {
-            const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 800;
-            const scaleSize = MAX_WIDTH / img.width;
-            canvas.width = MAX_WIDTH;
-            canvas.height = img.height * scaleSize;
-            const ctx = canvas.getContext('2d');
-            ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
-            const compressedData = canvas.toDataURL('image/jpeg', 0.7);
-
-            setFormData(prev => ({
-              ...prev,
-              evidence: {
-                ...prev.evidence,
-                photos: [...(prev.evidence?.photos || []), compressedData]
-              }
-            }));
-          };
-        };
-        reader.readAsDataURL(file);
-      });
-    }
-  };
-
-  const removePhoto = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      evidence: {
-        ...prev.evidence,
-        photos: (prev.evidence?.photos || []).filter((_, i) => i !== index)
-      }
-    }));
-  };
-
-  useEffect(() => {
-    if (!initialOrder) {
-      localStorage.setItem('so_draft_current', JSON.stringify(formData));
-    }
-  }, [formData, initialOrder]);
 
   const handleChange = (section: keyof ServiceOrder, field: string, value: any) => {
     setFormData(prev => ({
@@ -1167,15 +1118,15 @@ const CreateServiceOrder: React.FC<{
                       <span className="material-symbols-outlined text-4xl mb-2">playlist_add</span>
                       <p className="text-sm font-medium">Agregue productos manual o seleccione proveedor.</p>
                     </div>
-                    <button onClick={handleAddProduct} className="text-primary p-2">
-                      <span className="material-symbols-outlined">add_circle</span>
-                    </button>
-                  </div>
-                  <div className="p-4 space-y-4">
-                    {formData.products.map((p, i) => (
-                      <div key={i} className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-4 relative">
-                        <button onClick={() => handleDeleteProduct(i)} className="absolute top-2 right-2 text-red-400">
-                          <span className="material-symbols-outlined text-lg">close</span>
+                  ) : (
+                    formData.products.map((product, index) => (
+                      <div key={index} className="bg-slate-50 rounded-xl border border-slate-200 p-5 group hover:border-primary/30 transition-colors relative">
+                        <button
+                          onClick={() => handleDeleteProduct(index)}
+                          className="absolute top-3 right-3 text-slate-300 hover:text-red-500 transition-colors"
+                          title="Eliminar producto"
+                        >
+                          <span className="material-symbols-outlined text-lg">delete</span>
                         </button>
 
                         <div className="flex items-center gap-3 mb-4">
@@ -1221,39 +1172,46 @@ const CreateServiceOrder: React.FC<{
                               placeholder="0"
                             />
                           </div>
-                          <div className="space-y-1">
-                            <label className="text-[8px] font-black text-slate-400 uppercase">Piezas</label>
-                            <input type="number" className="w-full border-slate-200 rounded-lg text-xs p-2" value={p.pieces} onChange={e => handleProductChange(i, 'pieces', parseInt(e.target.value))} />
+                          <div>
+                            <input
+                              type="number"
+                              className="w-full border-slate-200 rounded-lg text-xs focus:border-primary focus:ring-primary"
+                              value={product.volume}
+                              onChange={(e) => handleProductChange(index, 'volume', parseFloat(e.target.value))}
+                              placeholder="0"
+                            />
                           </div>
-                          <div className="space-y-1">
-                            <label className="text-[8px] font-black text-slate-400 uppercase">U.M.</label>
-                            <input className="w-full border-slate-200 rounded-lg text-xs p-2" value={p.unitMeasure} onChange={e => handleProductChange(i, 'unitMeasure', e.target.value)} placeholder="kg" />
+                          <div>
+                            <input
+                              type="number"
+                              className="w-full border-slate-200 rounded-lg text-xs focus:border-primary focus:ring-primary"
+                              value={product.pieces}
+                              onChange={(e) => handleProductChange(index, 'pieces', parseInt(e.target.value))}
+                              placeholder="0"
+                            />
                           </div>
-                          <div className="space-y-1">
-                            <label className="text-[8px] font-black text-slate-400 uppercase">Temp</label>
-                            <select className="w-full border-slate-200 rounded-lg text-[10px] p-2" value={p.temperature} onChange={e => handleProductChange(i, 'temperature', e.target.value)}>
-                              <option value="SECO">Seco</option>
-                              <option value="REFRIGERADO">Refrigerado</option>
-                              <option value="CONGELADO">Congelado</option>
-                            </select>
+                          <div>
+                            <input
+                              className="w-full border-slate-200 rounded-lg text-xs focus:border-primary focus:ring-primary"
+                              value={product.unitMeasure}
+                              onChange={(e) => handleProductChange(index, 'unitMeasure', e.target.value)}
+                              placeholder="U.M"
+                            />
+                          </div>
+                          <div>
+                            <input
+                              className="w-full border-slate-200 rounded-lg text-xs focus:border-primary focus:ring-primary"
+                              value={product.others || ''}
+                              onChange={(e) => handleProductChange(index, 'others', e.target.value)}
+                              placeholder="Notas..."
+                            />
                           </div>
                         </div>
                       </div>
-                    ))}
-                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100">
-                      <div>
-                        <label className="text-[9px] font-black text-slate-400 uppercase mb-1 block">Total Tarimas</label>
-                        <input type="number" className="w-full border-slate-200 rounded-xl text-sm p-3 font-bold" value={formData.logistics.palletCount} onChange={e => handleChange('logistics', 'palletCount', parseInt(e.target.value))} />
-                      </div>
-                      <div>
-                        <label className="text-[9px] font-black text-slate-400 uppercase mb-1 block">Peso Tarima</label>
-                        <input type="number" className="w-full border-slate-200 rounded-xl text-sm p-3 font-bold" value={formData.logistics.palletWeight} onChange={e => handleChange('logistics', 'palletWeight', parseFloat(e.target.value))} />
-                      </div>
-                    </div>
-                  </div>
+                    ))
+                  )}
                 </div>
               </div>
-            )}
 
               <div className="border-t border-slate-100"></div>
 
@@ -1270,56 +1228,13 @@ const CreateServiceOrder: React.FC<{
                         onChange={(e) => handleChange('logistics', 'palletWeight', parseFloat(e.target.value))}
                       />
                     </div>
-
-                    <div className="grid grid-cols-2 gap-4 pt-4">
-                      <div>
-                        <label className="text-[9px] font-black text-slate-400 uppercase mb-1 block">Fecha Recepción</label>
-                        <input type="date" className="w-full border-slate-200 rounded-xl p-3 text-sm font-bold bg-slate-50" value={formData.general.receptionDate} onChange={e => handleChange('general', 'receptionDate', e.target.value)} />
-                      </div>
-                      <div>
-                        <label className="text-[9px] font-black text-slate-400 uppercase mb-1 block">Modo Entrega</label>
-                        <select className="w-full border-slate-200 rounded-xl p-3 text-sm font-bold bg-slate-50" value={formData.general.deliveryMethod} onChange={e => handleChange('general', 'deliveryMethod', e.target.value)}>
-                          <option value="OCURRE">OCURRE</option>
-                          <option value="DOMICILIO">DOMICILIO</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {currentStep === 4 && (
-              <div className="space-y-6">
-                <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-                  <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-purple-600 text-lg">add_a_photo</span>
-                    <h3 className="font-black text-brand-navy uppercase text-xs tracking-widest">Evidencia de Carga</h3>
-                  </div>
-                  <div className="p-6 space-y-6">
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {formData.evidence?.photos.map((photo, i) => (
-                        <div key={i} className="aspect-square rounded-2xl border border-slate-200 overflow-hidden relative group">
-                          <img src={photo} className="w-full h-full object-cover" />
-                          <button onClick={() => removePhoto(i)} className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg">
-                            <span className="material-symbols-outlined text-sm">close</span>
-                          </button>
-                        </div>
-                      ))}
-                      <label className="aspect-square rounded-2xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-2 cursor-pointer hover:bg-slate-50 transition-colors">
-                        <span className="material-symbols-outlined text-3xl text-slate-300">add_a_photo</span>
-                        <span className="text-[10px] font-black text-slate-400 uppercase">Subir Foto</span>
-                        <input type="file" accept="image/*" multiple capture="environment" className="hidden" onChange={handlePhotoCapture} />
-                      </label>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-slate-400 uppercase ml-2">Comentarios Operativos</label>
-                      <textarea
-                        className="w-full border-slate-200 rounded-2xl p-4 bg-slate-50 text-sm font-medium focus:ring-primary h-32"
-                        placeholder="Describa el estado de la carga o cualquier novedad..."
-                        value={formData.evidence?.observations}
-                        onChange={e => handleChange('evidence', 'observations', e.target.value)}
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-400 mb-1"># Tarimas</label>
+                      <input
+                        className="w-full border-slate-200 rounded-lg text-xs"
+                        type="number"
+                        value={formData.logistics.palletCount}
+                        onChange={(e) => handleChange('logistics', 'palletCount', parseInt(e.target.value))}
                       />
                     </div>
                   </div>
@@ -1515,8 +1430,8 @@ const CreateServiceOrder: React.FC<{
             <DocumentPreview order={formData} />
           </div>
         </div>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
 
