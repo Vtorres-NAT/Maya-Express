@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useData } from '../context/DataContext';
+import { useLanguage } from '../context/LanguageContext';
 import { Client, Provider, ProductItem } from '../types';
 
 const ClientsProviders: React.FC = () => {
@@ -13,13 +14,14 @@ const ClientsProviders: React.FC = () => {
         updateProvider,
         deleteProvider
     } = useData();
+    const { t } = useLanguage();
 
     const [activeTab, setActiveTab] = useState<'clients' | 'providers'>('clients');
     const [searchTerm, setSearchTerm] = useState('');
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingId, setEditingId] = useState<number | null>(null);
+    const [editingId, setEditingId] = useState<string | null>(null);
 
     // Form State
     const initialClientState: Omit<Client, 'id'> = {
@@ -74,15 +76,15 @@ const ClientsProviders: React.FC = () => {
         setIsModalOpen(true);
     };
 
-    const handleDeleteClientAction = (id: number) => {
+    const handleDeleteClientAction = async (id: string) => {
         if (window.confirm('¿Estás seguro de eliminar este cliente?')) {
-            deleteClient(id);
+            await deleteClient(id);
         }
     };
 
-    const handleDeleteProviderAction = (id: number) => {
+    const handleDeleteProviderAction = async (id: string) => {
         if (window.confirm('¿Estás seguro de eliminar este proveedor?')) {
-            deleteProvider(id);
+            await deleteProvider(id);
         }
     };
 
@@ -105,30 +107,30 @@ const ClientsProviders: React.FC = () => {
         });
     };
 
-    const handleSave = (e: React.FormEvent) => {
+    const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         if (activeTab === 'clients') {
             if (editingId) {
-                updateClient(editingId, formDataClient);
+                await updateClient(editingId, formDataClient);
             } else {
-                addClient(formDataClient);
+                await addClient(formDataClient);
             }
         } else {
             if (editingId) {
-                updateProvider(editingId, formDataProvider);
+                await updateProvider(editingId, formDataProvider);
             } else {
-                addProvider(formDataProvider);
+                await addProvider(formDataProvider);
             }
         }
         setIsModalOpen(false);
     };
 
     return (
-        <div className="space-y-6 animate-fade-in-up relative">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex flex-col h-full space-y-6 animate-fade-in-up relative overflow-hidden">
+            <div className="flex justify-between items-center bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                 <div>
-                    <h1 className="text-3xl font-black text-brand-navy tracking-tight">Directorio Comercial</h1>
-                    <p className="text-slate-500 mt-1">Gestión centralizada de Clientes y Proveedores</p>
+                    <h1 className="text-2xl font-black text-brand-navy uppercase tracking-tight">{t('module.clients.title')}</h1>
+                    <p className="text-sm text-slate-500 font-medium mt-1">{t('module.clients.subtitle')}</p>
                 </div>
 
                 <div className="flex bg-white p-1 rounded-xl shadow-sm border border-slate-200">
@@ -153,7 +155,7 @@ const ClientsProviders: React.FC = () => {
                 </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="flex-1 flex flex-col bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 {/* Toolbar */}
                 <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between gap-4">
                     <div className="relative">
@@ -176,13 +178,13 @@ const ClientsProviders: React.FC = () => {
                 </div>
 
                 {/* Content */}
-                <div className="overflow-x-auto">
+                <div className="flex-1 overflow-auto custom-scrollbar">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="bg-slate-50/50 text-slate-500 text-xs uppercase tracking-wider font-bold">
+                            <tr className="bg-slate-50/50 text-slate-400 text-[10px] uppercase tracking-[0.2em] font-black border-b border-slate-100">
                                 <th className="p-4 w-16 text-center">#</th>
                                 <th className="p-4">{activeTab === 'clients' ? 'Cliente' : 'Proveedor'}</th>
-                                <th className="p-4">{activeTab === 'clients' ? 'Dir. Entrega' : 'Dirección'}</th>
+                                <th className="p-4">{activeTab === 'clients' ? 'Dirección de Entrega' : 'Dirección'}</th>
                                 <th className="p-4">Contacto</th>
                                 <th className="p-4">{activeTab === 'clients' ? 'Detalles Logísticos' : 'Productos / Temperaturas'}</th>
                                 <th className="p-4 w-24 text-center">Acciones</th>
@@ -190,34 +192,34 @@ const ClientsProviders: React.FC = () => {
                         </thead>
                         <tbody className="divide-y divide-slate-100 text-sm md:text-base">
                             {activeTab === 'clients' ? (
-                                clients.filter(c => c.client.toLowerCase().includes(searchTerm.toLowerCase())).map((item) => (
+                                clients.filter(c => c.client.toLowerCase().includes(searchTerm.toLowerCase())).map((item, i) => (
                                     <tr key={item.id} className="hover:bg-blue-50/30 transition-colors group">
-                                        <td className="p-4 text-center font-mono text-slate-400">#{item.id}</td>
+                                        <td className="p-4 text-center font-mono text-slate-400">{i + 1}</td>
                                         <td className="p-4">
-                                            <div className="font-bold text-brand-navy">{item.client}</div>
-                                            <div className="text-xs text-slate-400 mt-0.5">{item.email || 'No email registered'}</div>
+                                            <div className="font-bold text-brand-navy capitalize text-xs">{item.client.toLowerCase()}</div>
+                                            <div className="text-[10px] text-slate-400 mt-0.5">{item.email || 'No email registered'}</div>
                                         </td>
-                                        <td className="p-4 text-slate-600 max-w-xs truncate" title={item.deliveryAddress}>
-                                            {item.deliveryAddress}
+                                        <td className="p-4 text-slate-600 whitespace-normal min-w-[300px] capitalize text-xs" title={item.deliveryAddress}>
+                                            {item.deliveryAddress.toLowerCase()}
                                         </td>
                                         <td className="p-4">
                                             <div className="flex items-center gap-2">
                                                 <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-500">
                                                     {item.contactName.charAt(0)}
                                                 </div>
-                                                <span className="text-slate-700 font-medium">{item.contactName}</span>
+                                                <span className="text-slate-700 font-medium capitalize text-xs">{item.contactName.toLowerCase()}</span>
                                             </div>
-                                            <div className="text-xs text-slate-400 ml-8 mt-0.5">{item.phone}</div>
+                                            <div className="text-[10px] text-slate-400 ml-8 mt-0.5">{item.phone}</div>
                                         </td>
                                         <td className="p-4">
                                             <div className="flex flex-wrap gap-2">
-                                                <span className="px-2 py-1 rounded bg-blue-100 text-blue-700 text-xs font-bold">{item.destination}</span>
-                                                <span className="px-2 py-1 rounded bg-purple-100 text-purple-700 text-xs font-bold">{item.deliveryMethod}</span>
-                                                <span className={`px-2 py-1 rounded text-xs font-bold ${item.insurance === 'SI' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>
-                                                    Seguro: {item.insurance}
+                                                <span className="px-2 py-1 rounded bg-blue-100 text-blue-700 text-xs font-bold capitalize">{item.destination.toLowerCase()}</span>
+                                                <span className="px-2 py-1 rounded bg-purple-100 text-purple-700 text-xs font-bold capitalize">{item.deliveryMethod.toLowerCase()}</span>
+                                                <span className={`px-2 py-1 rounded text-xs font-bold ${item.insurance === 'SI' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'} capitalize`}>
+                                                    Seguro: {item.insurance.toLowerCase()}
                                                 </span>
-                                                <span className={`px-2 py-1 rounded text-xs font-bold ${item.pickupRequired === 'SI' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>
-                                                    Recolección: {item.pickupRequired || 'N/A'}
+                                                <span className={`px-2 py-1 rounded text-xs font-bold ${item.pickupRequired === 'SI' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'} capitalize`}>
+                                                    Recolección: {(item.pickupRequired || 'N/A').toLowerCase()}
                                                 </span>
                                             </div>
                                         </td>
@@ -242,30 +244,31 @@ const ClientsProviders: React.FC = () => {
                                     </tr>
                                 ))
                             ) : (
-                                providers.filter(p => p.provider.toLowerCase().includes(searchTerm.toLowerCase())).map((item) => (
+                                providers.filter(p => p.provider.toLowerCase().includes(searchTerm.toLowerCase())).map((item, i) => (
                                     <tr key={item.id} className="hover:bg-blue-50/30 transition-colors group">
-                                        <td className="p-4 text-center font-mono text-slate-400">#{item.id}</td>
+                                        <td className="p-4 text-center font-mono text-slate-400">{i + 1}</td>
                                         <td className="p-4">
-                                            <div className="font-bold text-brand-navy">{item.provider}</div>
+                                            <div className="font-bold text-brand-navy capitalize text-xs">{item.provider.toLowerCase()}</div>
                                         </td>
-                                        <td className="p-4 text-slate-600">{item.address}</td>
+                                        <td className="p-4 text-slate-600 capitalize text-xs">{item.address.toLowerCase()}</td>
                                         <td className="p-4">
                                             <div className="flex items-center gap-2">
                                                 <div className="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-xs font-bold text-emerald-600">
                                                     {item.contactName.charAt(0)}
                                                 </div>
-                                                <span className="text-slate-700 font-medium">{item.contactName}</span>
+                                                <span className="text-slate-700 font-medium capitalize text-xs">{item.contactName.toLowerCase()}</span>
                                             </div>
-                                            <div className="text-xs text-slate-400 ml-8 mt-0.5">{item.phone}</div>
+                                            <div className="text-[10px] text-slate-400 ml-8 mt-0.5">{item.phone}</div>
                                         </td>
                                         <td className="p-4">
                                             <div className="flex flex-col gap-1.5">
                                                 {item.products.map((prod, idx) => (
                                                     <div key={idx} className="flex items-center gap-2 text-sm">
-                                                        <span className="text-slate-700 font-medium">{prod.name}</span>
-                                                        <span className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border ${prod.temperature === 'CONGELADO' ? 'border-blue-200 bg-blue-50 text-blue-600' :
-                                                            prod.temperature === 'REFRIGERADO' ? 'border-cyan-200 bg-cyan-50 text-cyan-600' :
-                                                                'border-orange-200 bg-orange-50 text-orange-600'
+                                                        <span className="text-slate-700 font-medium capitalize">{prod.name.toLowerCase()}</span>
+                                                        <span className={`text-[10px] uppercase font-black px-1.5 py-0.5 rounded ${prod.temperature === 'CONGELADO' ? 'bg-[#00CCFF] text-white' :
+                                                            prod.temperature === 'SECO' ? 'bg-[#FFFF00] text-black' :
+                                                                prod.temperature === 'REFRIGERADO' ? 'bg-[#FF00FF] text-white' :
+                                                                    'bg-slate-100 text-slate-600'
                                                             }`}>
                                                             {prod.temperature}
                                                         </span>
@@ -485,9 +488,10 @@ const ClientsProviders: React.FC = () => {
                                                 <div key={idx} className="flex items-center justify-between bg-slate-50 p-2 rounded-lg border border-slate-100">
                                                     <div className="flex items-center gap-3">
                                                         <span className="font-bold text-slate-700 text-sm">{prod.name}</span>
-                                                        <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded border ${prod.temperature === 'CONGELADO' ? 'border-blue-200 bg-blue-50 text-blue-600' :
-                                                            prod.temperature === 'REFRIGERADO' ? 'border-cyan-200 bg-cyan-50 text-cyan-600' :
-                                                                'border-orange-200 bg-orange-50 text-orange-600'
+                                                        <span className={`text-[10px] uppercase font-black px-2 py-0.5 rounded ${prod.temperature === 'CONGELADO' ? 'bg-[#00CCFF] text-white' :
+                                                            prod.temperature === 'SECO' ? 'bg-[#FFFF00] text-black' :
+                                                                prod.temperature === 'REFRIGERADO' ? 'bg-[#FF00FF] text-white' :
+                                                                    'bg-slate-100 text-slate-600'
                                                             }`}>
                                                             {prod.temperature}
                                                         </span>
@@ -519,7 +523,7 @@ const ClientsProviders: React.FC = () => {
                                                 />
                                             </div>
                                             <div className="w-full sm:w-40 space-y-1">
-                                                <label className="text-[10px] font-bold text-slate-400 uppercase">Temp.</label>
+                                                <label className="text-[10px] font-bold text-slate-400 uppercase">Temperatura</label>
                                                 <select
                                                     className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                                                     value={newProduct.temperature}

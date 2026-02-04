@@ -12,7 +12,7 @@
     "skipLibCheck": true,
     "types": [
       "node",
-      "google.maps"
+      "vite/client"
     ],
     "moduleResolution": "bundler",
     "isolatedModules": true,

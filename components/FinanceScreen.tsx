@@ -1,9 +1,18 @@
 
 import React from 'react';
+import { useLanguage } from '../context/LanguageContext';
 
 const FinanceScreen: React.FC = () => {
+  const { t } = useLanguage();
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div>
+          <h1 className="text-2xl font-black text-brand-navy uppercase tracking-tight">{t('module.finance.title')}</h1>
+          <p className="text-sm text-slate-500 font-medium mt-1">{t('module.finance.subtitle')}</p>
+        </div>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {[
           { label: 'Accounts Receivable', value: '$2,410,500', trend: '+5.2%', color: 'blue', sub: '75% collected' },
@@ -15,11 +24,11 @@ const FinanceScreen: React.FC = () => {
             <p className={`text-[10px] font-black uppercase tracking-widest mb-2 ${item.color === 'navy' ? 'text-blue-300' : 'text-slate-500'}`}>{item.label}</p>
             <h3 className="text-2xl font-black">{item.value}</h3>
             <div className="mt-4 w-full bg-slate-100/20 h-1.5 rounded-full overflow-hidden">
-               <div className={`h-full ${item.color === 'red' ? 'bg-red-500' : 'bg-primary'}`} style={{ width: '64%' }}></div>
+              <div className={`h-full ${item.color === 'red' ? 'bg-red-500' : 'bg-primary'}`} style={{ width: '64%' }}></div>
             </div>
             <div className="flex justify-between items-center mt-3">
-               <span className="text-[9px] font-bold opacity-60 uppercase">{item.sub}</span>
-               <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${item.color === 'red' ? 'bg-red-500 text-white' : 'bg-primary/20 text-primary'}`}>{item.trend}</span>
+              <span className="text-[9px] font-bold opacity-60 uppercase">{item.sub}</span>
+              <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${item.color === 'red' ? 'bg-red-500 text-white' : 'bg-primary/20 text-primary'}`}>{item.trend}</span>
             </div>
           </div>
         ))}
@@ -27,14 +36,14 @@ const FinanceScreen: React.FC = () => {
 
       <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
         <div className="p-8 border-b border-slate-100 flex justify-between items-center">
-           <div>
-              <h3 className="text-xl font-black text-brand-navy">Consolidated Invoicing Log</h3>
-              <p className="text-xs text-slate-500 font-medium">Tracking AR status across all active corridors</p>
-           </div>
-           <div className="flex gap-3">
-              <button className="px-5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600">Export CSV</button>
-              <button className="px-5 py-2 bg-primary text-white rounded-xl text-xs font-bold shadow-lg shadow-primary/20">New Transaction</button>
-           </div>
+          <div>
+            <h3 className="text-xl font-black text-brand-navy">Consolidated Invoicing Log</h3>
+            <p className="text-xs text-slate-500 font-medium">Tracking AR status across all active corridors</p>
+          </div>
+          <div className="flex gap-3">
+            <button className="px-5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-600">Export CSV</button>
+            <button className="px-5 py-2 bg-primary text-white rounded-xl text-xs font-bold shadow-lg shadow-primary/20">New Transaction</button>
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left">
@@ -69,10 +78,9 @@ const FinanceScreen: React.FC = () => {
                     {inv.amount}
                   </td>
                   <td className="px-8 py-6 text-center">
-                    <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase ${
-                      inv.color === 'emerald' ? 'bg-emerald-50 text-emerald-700' : 
-                      inv.color === 'amber' ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700'
-                    }`}>{inv.status}</span>
+                    <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase ${inv.color === 'emerald' ? 'bg-emerald-50 text-emerald-700' :
+                        inv.color === 'amber' ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-700'
+                      }`}>{inv.status}</span>
                   </td>
                 </tr>
               ))}

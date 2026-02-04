@@ -7,6 +7,17 @@ export enum OrderStatus {
   CANCELLED = 'Cancelled'
 }
 
+export type DriverStatus = 'disponible' | 'asignado' | 'descanso' | 'mantenimiento' | 'baja';
+export type UnitStatus = 'disponible' | 'asignado' | 'mantenimiento' | 'fuera_servicio' | 'baja';
+export type UserRole = 'admin' | 'warehouse' | 'logistics' | 'finance';
+
+export interface UserProfile {
+  id: string;
+  fullName: string | null;
+  avatarUrl: string | null;
+  role: UserRole;
+}
+
 export interface KPI {
   label: string;
   value: string | number;
@@ -48,6 +59,8 @@ export interface Driver {
   phone: string;
   license?: string;
   rfc?: string;
+  status: DriverStatus;
+  photourl?: string;
 }
 
 export interface Unit {
@@ -56,6 +69,9 @@ export interface Unit {
   brand?: string;
   color?: string;
   type?: string; // e.g. Refrigerado, Seco
+  status: UnitStatus;
+  colorCode?: string;
+  loc?: string;
 }
 
 export interface ServiceOrderProduct {
@@ -79,6 +95,10 @@ export interface ServiceOrder {
     photos: string[];
     observations?: string;
   };
+
+  // New Fields for Driver and Unit Selection
+  driverId?: string;
+  unitId?: string;
 
   // 1. General
   general: {
@@ -141,11 +161,14 @@ export interface ServiceOrder {
     includesShipping: boolean; // ¿Incluye ENVÍO?
     includesDelivery: boolean; // ¿Incluye ENTREGA FINAL?
   };
+
+  // 7. Evidencia Fotográfica (New)
+  attachments?: string[]; // Array of base64 strings or URLs
 }
 
 export interface FleetUnit {
   id: string; // Unit ID / Permon
-  status: 'In Transit' | 'At Dock' | 'Maintenance' | 'Idle' | 'Loading';
+  status: UnitStatus;
   type: 'Refrigerado' | 'Congelado' | 'Seco';
   brand: string;
   plates: string;
@@ -156,7 +179,7 @@ export interface FleetUnit {
 }
 
 export interface Client {
-  id: number;
+  id: string;
   client: string;
   deliveryAddress: string;
   contactName: string;
@@ -174,7 +197,7 @@ export interface ProductItem {
 }
 
 export interface Provider {
-  id: number;
+  id: string;
   provider: string;
   address: string;
   contactName: string;

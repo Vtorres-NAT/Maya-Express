@@ -2,6 +2,7 @@
 import React from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { DataProvider } from './context/DataContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
 import ExecutiveDashboard from './components/ExecutiveDashboard';
 import OperationalHub from './components/OperationalHub';
@@ -11,25 +12,49 @@ import BillingCenter from './components/BillingCenter';
 import FinanceScreen from './components/FinanceScreen';
 import ClientsProviders from './components/ClientsProviders';
 import MasterData from './components/MasterData';
+import LoginPage from './components/LoginPage';
+import LoadingScreen from './components/LoadingScreen';
+
+const AuthenticatedApp: React.FC = () => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
+  if (!user) {
+    return <LoginPage />;
+  }
+
+  return (
+    <Layout>
+      <Routes>
+        <Route path="/" element={<ExecutiveDashboard />} />
+        <Route path="/ops-hub" element={<OperationalHub />} />
+        <Route path="/tracking" element={<RealTimeTracking />} />
+        <Route path="/orders" element={<ServiceOrders />} />
+        <Route path="/billing" element={<BillingCenter />} />
+        <Route path="/finance" element={<FinanceScreen />} />
+        <Route path="/clients-providers" element={<ClientsProviders />} />
+        <Route path="/data" element={<MasterData />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Layout>
+  );
+};
+
+import { LanguageProvider } from './context/LanguageContext';
 
 const App: React.FC = () => {
   return (
     <HashRouter>
-      <DataProvider>
-        <Layout>
-          <Routes>
-            <Route path="/" element={<ExecutiveDashboard />} />
-            <Route path="/ops-hub" element={<OperationalHub />} />
-            <Route path="/tracking" element={<RealTimeTracking />} />
-            <Route path="/orders" element={<ServiceOrders />} />
-            <Route path="/billing" element={<BillingCenter />} />
-            <Route path="/finance" element={<FinanceScreen />} />
-            <Route path="/clients-providers" element={<ClientsProviders />} />
-            <Route path="/data" element={<MasterData />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Layout>
-      </DataProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          <DataProvider>
+            <AuthenticatedApp />
+          </DataProvider>
+        </AuthProvider>
+      </LanguageProvider>
     </HashRouter>
   );
 };

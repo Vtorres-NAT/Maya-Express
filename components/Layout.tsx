@@ -1,7 +1,7 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import LogisticsAssistant from './LogisticsAssistant';
+import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -9,61 +9,102 @@ interface LayoutProps {
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
+  const { profile, signOut } = useAuth();
+  const { language, setLanguage, t } = useLanguage();
+  const [isCollapsed, setIsCollapsed] = React.useState(false);
   const isActive = (path: string) => location.pathname === path;
 
   const navItems = [
-    { path: '/', label: 'Dash Ejecutivo', icon: 'insights' },
-    { path: '/ops-hub', label: 'Hub Operativo', icon: 'dashboard' },
-    { path: '/tracking', label: 'Rastreo Real-Time', icon: 'location_on' },
-    { path: '/orders', label: 'Órdenes de Servicio', icon: 'description' },
-    { path: '/billing', label: 'Centro de Facturación', icon: 'receipt_long' },
-    { path: '/finance', label: 'Finanzas CXC/CXP', icon: 'account_balance_wallet' },
-    { path: '/clients-providers', label: 'Clientes/Proveedores', icon: 'groups' },
-    { path: '/data', label: 'Datos Maestros', icon: 'dataset' },
+    { path: '/', label: t('nav.dashboard'), icon: 'insights' },
+    { path: '/ops-hub', label: t('nav.ops_hub'), icon: 'dashboard' },
+    { path: '/tracking', label: t('nav.tracking'), icon: 'location_on' },
+    { path: '/orders', label: t('nav.orders'), icon: 'description' },
+    { path: '/clients-providers', label: t('nav.clients'), icon: 'groups' },
+    // { path: '/billing', label: t('nav.billing'), icon: 'receipt_long' },
+    // { path: '/finance', label: t('nav.finance'), icon: 'account_balance_wallet' },
+    // { path: '/data', label: t('nav.data'), icon: 'dataset' },
   ];
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
-      <aside className="fixed left-0 top-0 h-full w-72 bg-brand-navy border-r border-white/10 z-30 hidden lg:block text-white">
-        <div className="p-8 border-b border-white/10">
-          <div className="flex flex-col gap-1">
-            <span className="text-[10px] uppercase tracking-[0.3em] text-blue-400 font-bold">Logística Integral</span>
-            <h1 className="font-black text-2xl leading-none tracking-tight">
-              MAYA <span className="text-blue-400">EXPRESS</span>
-            </h1>
-            <p className="text-[9px] uppercase tracking-widest text-slate-400 font-semibold mt-1">Enterprise Suite v3.2</p>
+    <div className="flex h-screen bg-slate-50 overflow-hidden">
+      {/* Sidebar */}
+      <aside className={`flex-shrink-0 h-full bg-brand-navy border-r border-white/10 z-30 hidden lg:block text-white transition-all duration-300 ease-in-out relative ${isCollapsed ? 'w-24' : 'w-72'}`}>
+        <div className={`flex flex-col h-full bg-brand-navy`}>
+          {/* Logo Section */}
+          <div className="p-6 h-20 flex items-center border-b border-white/5">
+            {!isCollapsed ? (
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[9px] uppercase tracking-[0.4em] text-blue-400 font-black opacity-80">CONSOLIDADOS</span>
+                <h1 className="font-black text-xl leading-none tracking-tight">
+                  MAYA <span className="text-blue-400">EXPRESS</span>
+                </h1>
+              </div>
+            ) : (
+              <div className="w-full flex justify-center">
+                <span className="text-blue-400 font-black text-xl tracking-tighter">CME</span>
+              </div>
+            )}
           </div>
-        </div>
-        <nav className="p-4 mt-4 space-y-1">
-          {navItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`flex items-center gap-3 px-6 py-3.5 rounded-lg transition-all ${isActive(item.path)
-                  ? 'bg-primary/20 text-blue-400 font-bold border-l-4 border-primary'
-                  : 'text-slate-300 hover:bg-white/5'
-                }`}
+
+          {/* Navigation */}
+          <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar">
+            {navItems.map((item) => {
+              const active = isActive(item.path);
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  title={isCollapsed ? item.label : ''}
+                  className={`
+                    flex items-center gap-4 rounded-xl transition-all duration-200 group
+                    ${isCollapsed ? 'justify-center h-12 w-12 mx-auto' : 'px-4 py-3'}
+                    ${active
+                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/40 font-bold'
+                      : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                    }
+                  `}
+                >
+                  <span className={`material-symbols-outlined transition-transform duration-200 ${active ? 'scale-110' : 'group-hover:scale-110'}`}>
+                    {item.icon}
+                  </span>
+                  {!isCollapsed && <span className="text-sm truncate">{item.label}</span>}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Sidebar Toggle - Repositioned and Animated */}
+          <div className="absolute top-1/2 -right-4 -translate-y-1/2 z-50">
+            <button
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white shadow-xl hover:bg-blue-500 transition-all border-2 border-brand-navy animate-breathe"
             >
-              <span className="material-symbols-outlined text-xl">{item.icon}</span>
-              <span className="text-sm">{item.label}</span>
-            </Link>
-          ))}
-        </nav>
-        <div className="absolute bottom-8 left-8 right-8">
-          <div className="p-4 bg-white/5 rounded-xl border border-white/10">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
-              <span className="text-xs font-bold uppercase tracking-wider">Sistema Activo</span>
-            </div>
-            <p className="text-[9px] text-slate-400">CDMX – Cancún – Mérida Corridor</p>
+              <span className="material-symbols-outlined text-base font-black">
+                {isCollapsed ? 'chevron_right' : 'chevron_left'}
+              </span>
+            </button>
           </div>
         </div>
       </aside>
 
-      <main className="flex-1 lg:pl-72 flex flex-col min-h-screen relative">
-        <header className="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-10 sticky top-0 z-20 shadow-sm">
+      <main className="flex-1 flex flex-col min-w-0 h-full relative">
+        <header className="flex-shrink-0 h-20 bg-white border-b border-slate-200 flex items-center justify-between px-10 z-20 shadow-sm">
           <div className="flex items-center gap-4">
-            <h2 className="text-lg font-bold text-brand-navy uppercase tracking-tight">Maya Operational Dashboard</h2>
+            {/* Language Toggle */}
+            <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
+              <button
+                onClick={() => setLanguage('es')}
+                className={`px-3 py-1.5 text-[10px] font-black rounded-lg transition-all ${language === 'es' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+              >
+                ESP
+              </button>
+              <button
+                onClick={() => setLanguage('en')}
+                className={`px-3 py-1.5 text-[10px] font-black rounded-lg transition-all ${language === 'en' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+              >
+                ENG
+              </button>
+            </div>
           </div>
           <div className="flex items-center gap-6">
             <div className="flex gap-2">
@@ -74,21 +115,36 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
             <div className="flex items-center gap-4 pl-6 border-l border-slate-200">
               <div className="text-right">
-                <p className="text-sm font-bold text-brand-navy leading-none">Administrador</p>
-                <p className="text-[10px] font-bold text-primary mt-1 uppercase tracking-tighter tracking-widest">CFO Logística</p>
+                <p className="text-sm font-bold text-brand-navy leading-none">{profile?.fullName || t('common.user')}</p>
+                <p className="text-[10px] font-bold text-primary mt-1 uppercase tracking-widest">{profile?.role || t('common.guest')}</p>
               </div>
-              <div className="w-10 h-10 bg-slate-100 rounded-full border border-slate-200 overflow-hidden">
-                <img alt="User" src="https://picsum.photos/seed/erp/100/100" />
+              <div className="relative group">
+                <div className="w-10 h-10 bg-slate-100 rounded-full border border-slate-200 overflow-hidden cursor-pointer">
+                  <img alt="User" src={profile?.avatarUrl || "https://picsum.photos/seed/erp/100/100"} />
+                </div>
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-200 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                  <button
+                    onClick={async () => {
+                      try {
+                        await signOut();
+                      } catch (err) {
+                        console.error('Logout failed:', err);
+                      }
+                    }}
+                    className="flex items-center gap-3 w-full px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 hover:text-red-600 transition-all font-bold"
+                  >
+                    <span className="material-symbols-outlined text-lg font-bold">logout</span>
+                    {t('nav.sign_out')}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </header>
 
-        <section className="p-8 lg:p-10 max-w-7xl mx-auto w-full">
+        <section className="flex-1 p-8 lg:p-10 max-w-[1600px] mx-auto w-full min-w-0 overflow-y-auto custom-scrollbar flex flex-col">
           {children}
         </section>
-
-        <LogisticsAssistant />
       </main>
     </div>
   );
