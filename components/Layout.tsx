@@ -19,10 +19,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { path: '/ops-hub', label: t('nav.ops_hub'), icon: 'dashboard' },
     { path: '/tracking', label: t('nav.tracking'), icon: 'location_on' },
     { path: '/orders', label: t('nav.orders'), icon: 'description' },
-    { path: '/billing', label: t('nav.billing'), icon: 'receipt_long' },
-    { path: '/finance', label: t('nav.finance'), icon: 'account_balance_wallet' },
     { path: '/clients-providers', label: t('nav.clients'), icon: 'groups' },
-    { path: '/data', label: t('nav.data'), icon: 'dataset' },
+    // { path: '/billing', label: t('nav.billing'), icon: 'receipt_long' },
+    // { path: '/finance', label: t('nav.finance'), icon: 'account_balance_wallet' },
+    // { path: '/data', label: t('nav.data'), icon: 'dataset' },
   ];
 
   return (
