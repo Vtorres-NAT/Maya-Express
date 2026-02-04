@@ -1,5 +1,5 @@
-import { supabase } from './lib/supabase';
-import { MOCK_DRIVERS, MOCK_UNITS } from './data/mockData';
+import { supabase } from './lib/supabase.ts';
+import { MOCK_DRIVERS, MOCK_UNITS } from './data/mockData.ts';
 
 // Mock Data from DataContext.tsx
 const MOCK_CLIENTS = [
